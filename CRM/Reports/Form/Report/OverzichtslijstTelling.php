@@ -275,9 +275,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
       $start_date = $toDate;
     }
     
-    if ($fromDate && $toDate) {
-      $this->_whereClauses[] = $this->addActiveRelationshipWhere($this->_aliases['civicrm_membership'], $start_date, $end_date);
-    }
+    $this->_whereClauses[] = $this->addActiveRelationshipWhere($this->_aliases['civicrm_membership'], $start_date, $end_date);
     $this->_whereClauses[] = $this->addActiveRelationshipWhere('regiorelatie', $start_date, $end_date);
     $this->_whereClauses[] = $this->addActiveRelationshipWhere('afdelingsrelatie', $start_date, $end_date);
   }
