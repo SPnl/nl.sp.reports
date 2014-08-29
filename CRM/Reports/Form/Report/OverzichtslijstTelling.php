@@ -11,18 +11,46 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
   protected $_customGroupExtends = array('Membership');
   protected $_customGroupGroupBy = FALSE; 
   
-  protected $lokaalLidRelTypeIds = array();
-  protected $regioRelTypeIds = array();
-  
   protected $_add2groupSupported = FALSE;
   
   protected $_exposeContactID = FALSE;
   
   function __construct() {
-    $this->lokaalLidRelTypeIds = $this->getLokaalLidRelationshipTypes();
-    $this->regioRelTypeIds = $this->getRegioRelationshipTypes();
     
     $this->_columns = array(
+     'civicrm_provincie' => array(
+        'dao' => 'CRM_Contact_DAO_Contact',
+        'fields' => array(
+          'provincie_id' => array(
+            'no_display' => TRUE,
+            'required' => TRUE,
+            'name' => 'id'
+          ),
+          'provincie_display_name' => array(
+            'title' => ts('Provincie'),
+            'default' => TRUE,
+            'name' => 'display_name'
+          ),          
+        ),
+        'filters' => array(
+        ),
+        'order_bys' => array(
+          'provincie_display_name' => array(
+            'title' => ts('Provincie'),
+            'default' => TRUE,
+            'section' => true,
+            'name' => 'display_name'
+          ),
+        ),
+        'group_bys' => array(
+          'regio_id' => array(
+            'title' => ts('Provincie'),
+            'default' => TRUE,
+            'name' => 'id'
+          ),
+        ),
+        'grouping' => 'contact-fields',
+      ),
      'civicrm_regio' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => array(
@@ -213,6 +241,12 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
   }
 
   function from() {
+    $config = CRM_Geostelsel_Config::singleton();
+    $table = $config->getGeostelselCustomGroup('table_name');
+    $afdeling = $config->getAfdelingsField('column_name');
+    $regio = $config->getRegioField('column_name');
+    $provincie = $config->getProvincieField('column_name');
+    
     $this->_from = NULL;
 
     $this->_from = "
@@ -222,17 +256,15 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
                              {$this->_aliases['civicrm_membership']}.contact_id AND {$this->_aliases['civicrm_membership']}.is_test = 0
                LEFT  JOIN civicrm_membership_status {$this->_aliases['civicrm_membership_status']}
                           ON {$this->_aliases['civicrm_membership_status']}.id =
-                             {$this->_aliases['civicrm_membership']}.status_id 
-               LEFT JOIN civicrm_relationship `afdelingsrelatie` 
-                          ON `afdelingsrelatie`.`relationship_type_id` IN (".implode(",", $this->lokaalLidRelTypeIds).")
-                          AND `afdelingsrelatie`.`contact_id_a`  = `{$this->_aliases['civicrm_contact']}`.`id`  
+                             {$this->_aliases['civicrm_membership']}.status_id  
+               LEFT JOIN {$table} `geostelsel`
+                          ON {$this->_aliases['civicrm_contact']}.id = geostelsel.entity_id
                LEFT JOIN civicrm_contact {$this->_aliases['civicrm_afdeling']} 
-                          ON {$this->_aliases['civicrm_afdeling']}.id = `afdelingsrelatie`.`contact_id_b`
-               LEFT JOIN civicrm_relationship `regiorelatie` 
-                          ON `regiorelatie`.`relationship_type_id` IN (".implode(",", $this->regioRelTypeIds).")
-                          AND `regiorelatie`.`contact_id_a`  = `{$this->_aliases['civicrm_afdeling']}`.`id`  
+                          ON {$this->_aliases['civicrm_afdeling']}.id = `geostelsel`.`{$afdeling}`
                LEFT JOIN civicrm_contact {$this->_aliases['civicrm_regio']} 
-                          ON {$this->_aliases['civicrm_regio']}.id = `regiorelatie`.`contact_id_b`
+                          ON {$this->_aliases['civicrm_regio']}.id = `geostelsel`.`{$regio}`
+               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_provincie']} 
+                          ON {$this->_aliases['civicrm_provincie']}.id = `geostelsel`.`{$provincie}`
                ";
                              
 
@@ -276,8 +308,6 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     }
     
     $this->_whereClauses[] = $this->addActiveRelationshipWhere($this->_aliases['civicrm_membership'], $start_date, $end_date);
-    $this->_whereClauses[] = $this->addActiveRelationshipWhere('regiorelatie', $start_date, $end_date);
-    $this->_whereClauses[] = $this->addActiveRelationshipWhere('afdelingsrelatie', $start_date, $end_date);
   }
   
   protected function addActiveRelationshipWhere($relationship_table, $start_date, $end_date) {
@@ -373,32 +403,23 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         $rows[$rowNum]['civicrm_regio_regio_display_name_hover'] = ts("View Contact Summary for this Contact.");
         $entryFound = TRUE;
       }
+      
+      if (array_key_exists('civicrm_provincie_provincie_display_name', $row) &&
+        $rows[$rowNum]['civicrm_provincie_provincie_display_name'] &&
+        array_key_exists('civicrm_provincie_provincie_id', $row)
+      ) {
+        $url = CRM_Utils_System::url("civicrm/contact/view",
+          'reset=1&cid=' . $row['civicrm_provincie_provincie_id'],
+          $this->_absoluteUrl
+        );
+        $rows[$rowNum]['civicrm_provincie_provincie_display_name_link'] = $url;
+        $rows[$rowNum]['civicrm_provincie_provincie_display_name_hover'] = ts("View Contact Summary for this Contact.");
+        $entryFound = TRUE;
+      }
 
       if (!$entryFound) {
         break;
       }
     }
-  }
-  
-  protected function getLokaalLidRelationshipTypes() {
-    $return = array();
-    
-    if (class_exists('CRM_Geostelsel_RelationshipTypes')) {
-      $rel = CRM_Geostelsel_RelationshipTypes::singleton();
-      $return = $rel->getLokaalLidRelationshipTypeIds();
-    }
-    
-    return $return;
-  }
-  
-  protected function getRegioRelationshipTypes() {
-    $return = array();
-    
-    if (class_exists('CRM_Geostelsel_RelationshipTypes')) {
-      $rel = CRM_Geostelsel_RelationshipTypes::singleton();
-      $return = $rel->getRegioRelationshipTypeIds();
-    }
-    
-    return $return;
   }
 }
