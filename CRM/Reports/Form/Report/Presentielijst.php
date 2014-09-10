@@ -354,10 +354,10 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
 
 
     $this->_options = array(
-      'blank_column_begin' => array(
-        'title' => ts('Blank column at the Begining'),
+/*      'blank_column_begin' => array(
+        'title' => ts('Blank column at the Beginning'),
         'type' => 'checkbox',
-      ),
+      ),*/
       'autograph' => array(
         'title' => ts('Handtekening kolom'),
         'type' => 'checkbox',
