@@ -64,8 +64,14 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' =>
         array(
+          'id' =>
+          array(
+          //  'no_display' => TRUE,
+            'required' => TRUE,
+          ),
           'sort_name_linked' =>
           array('title' => ts('Participant Name'),
+            'no_display' => TRUE,
             'required' => TRUE,
             'no_repeat' => TRUE,
             'dbAlias' => 'contact_civireport.sort_name',
@@ -73,11 +79,6 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
           'first_name' => array('title' => ts('First Name'),
           ),
           'last_name' => array('title' => ts('Last Name'),
-          ),
-          'id' =>
-          array(
-            'no_display' => TRUE,
-            'required' => TRUE,
           ),
           'gender_id' =>
           array('title' => ts('Gender'),
@@ -448,7 +449,7 @@ GROUP BY  cv.label
     if (array_key_exists('autograph', $this->_params) &&
       CRM_Utils_Array::value('autograph', $this->_params)) {
       $select[] = " '' as autograph";
-      $this->_columnHeaders['autograph']['title'] = '        Handtekening          ';
+      $this->_columnHeaders['autograph']['title'] = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handtekening&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
     }
 
 
@@ -631,7 +632,24 @@ GROUP BY  cv.label
           $roles = explode(CRM_Core_DAO::VALUE_SEPARATOR, $value);
           $value = array();
           foreach ($roles as $role) {
-            $value[$role] = CRM_Event_PseudoConstant::participantRole($role, FALSE);
+
+            $role_des=CRM_Event_PseudoConstant::participantRole($role, FALSE);
+
+            $role_v = "";
+            switch ($role_des){
+              case 'Deelnemer': 
+                $role_v="D";
+                break;
+              case 'Deelnemer met stemrecht':
+                $role_v="DS";
+                break;
+              case 'Gast':
+                $role_v="G"; 
+                break;
+             
+            }
+            
+            $value[$role] = $role_v;
           }
           $rows[$rowNum]['civicrm_participant_role_id'] = implode(', ', $value);
         }
@@ -645,6 +663,10 @@ GROUP BY  cv.label
           $rows[$rowNum]['civicrm_participant_participant_fee_level'] = $value;
         }
         $entryFound = TRUE;
+      }
+
+      if (array_key_exists('autograph', $row)) {
+           $rows[$rowNum]['autograph']="<br /><br /><br />";
       }
 
       // Convert display name to link
@@ -664,8 +686,10 @@ GROUP BY  cv.label
         $contactTitle = ts('View Contact Details');
         $participantTitle = ts('View Participant Record');
 
-        $rows[$rowNum]['civicrm_contact_sort_name_linked'] = "<a title='$contactTitle' href=$url>$displayName</a>";
+        $rows[$rowNum]['civicrm_contact_sort_name_linked'] = $cid; 
         if ($this->_outputMode !== 'csv' && $this->_outputMode !== 'pdf') {
+          $rows[$rowNum]['civicrm_contact_sort_name_linked'] = "<a title='$contactTitle' href=$url>$displayName</a>";
+
           $rows[$rowNum]['civicrm_contact_sort_name_linked'] .= "<span style='float: right;'><a title='$participantTitle' href=$viewUrl>" . ts('View') . "</a></span>";
         }
         $entryFound = TRUE;
@@ -761,3 +785,4 @@ GROUP BY  cv.label
     }
   }
 }
+
