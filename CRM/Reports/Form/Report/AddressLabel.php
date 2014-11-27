@@ -10,37 +10,126 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   protected $_customGroupGroupBy = FALSE; 
   
   function __construct() {
+    $this->fetchCustom();
+    
     $this->_columns = array(
       'civicrm_contact' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => array(
+          'id' => array(
+            'required' => TRUE,
+            'default' => TRUE,
+          ),
           'display_name' => array(
             'title' => ts('Contact Name'),
             'required' => TRUE,
             'default' => TRUE,
             'no_repeat' => TRUE,
           ),
-          'id' => array(
-            'no_display' => TRUE,
-            'required' => TRUE,
-          ),
+          
         ),
         'grouping' => 'contact-fields',
       ),
       'civicrm_address' => array(
         'dao' => 'CRM_Core_DAO_Address',
         'fields' => array(
-          'street_address' => NULL,
-          'city' => NULL,
-          'postal_code' => NULL,
-          'country_id' => array('title' => ts('Country')),
+          'street_address' => array(
+            'required' => true,
+          ),
+          'postal_code' => array(
+            'required' => true,
+          ),
+          'city' => array(
+            'required' => true,
+          ),
+          'country_id' => array('title' => ts('Country'), 'required' => true),
         ),
         'grouping' => 'contact-fields',
+      ),
+      'civicrm_membership' => array(
+        'dao' => 'CRM_Member_DAO_Membership',
+        'fields' => array(
+        ),
+        'filters' => array(
+          'join_date' => array(
+            'operatorType' => CRM_Report_Form::OP_DATE,
+            'pseudofield' => true,
+          ),
+          'tid' => array(
+            'name' => 'membership_type_id',
+            'title' => ts('Membership Types'),
+            'type' => CRM_Utils_Type::T_INT,
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Member_PseudoConstant::membershipType(),
+          ),
+        ),
+        'grouping' => 'member-fields',
+      ),
+      'civicrm_membership_status' => array(
+        'dao' => 'CRM_Member_DAO_MembershipStatus',
+        'alias' => 'mem_status',
+        'fields' => array(
+        ),
+        'filters' => array(
+          'sid' => array(
+            'name' => 'id',
+            'title' => ts('Status'),
+            'type' => CRM_Utils_Type::T_INT,
+            'operatorType' => CRM_Report_Form::OP_MULTISELECT,
+            'options' => CRM_Member_PseudoConstant::membershipStatus(NULL, NULL, 'label'),
+          ),
+        ),      
+        'grouping' => 'member-fields',
+      ),
+      'afdeling' => array(
+        'dao' => 'CRM_Contact_DAO_Contact',
+        'alias' => 'afdeling',
+        'fields' => array(
+          'afdeling' => array(
+            'required' => true,
+            'title' => 'Afdeling',
+            'default' => true,
+            'name' => 'display_name',
+          ),
+          'afdeling_id' => array(
+            'required' => true,
+            'title' => 'Afdeling ID',
+            'default' => true,
+            'name' => 'id',
+          )
+        ),
+        'grouping' => 'afdeling-fields',
+      ),
+      'bezorg_gebied' => array (
+        'alias' => 'cbzg',
+        'fields' => array(
+          'deliver_area_name' => array(
+            'required' => true,
+            'title' => 'Bezorggebied',
+            'name' => $this->_custom_fields->name['column_name'],
+          ),
+          'deliver_per_post' => array(
+            'required' => true,
+            'title' => 'Per post',
+            'name' => $this->_custom_fields->per_post['column_name'],
+          ),
+        )
       ),
     );
     $this->_groupFilter = FALSE;
     $this->_tagFilter = FALSE;
     parent::__construct();
+  }
+  
+  protected function fetchCustom() {
+    $this->_custom_fields 						= new stdClass();
+    $this->_custom_fields->group 				= civicrm_api3('CustomGroup', 'getsingle', array("name" => "Bezorggebieden"));
+    $this->_custom_fields->name 				= civicrm_api3('CustomField', 'getsingle', array("name" => "Bezorggebied_naam", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->start_cijfer_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "start_cijfer_range", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->eind_cijfer_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "eind_cijfer_range", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->start_letter_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "start_letter_range", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->eind_letter_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "eind_letter_range", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->per_post 			= civicrm_api3('CustomField', 'getsingle', array("name" => "Per_Post", "custom_group_id" => $this->_custom_fields->group['id']));
   }
 
   function preProcess() {
@@ -48,7 +137,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     parent::preProcess();
   }
 
-  function select() {
+  /*function select() {
     $select = $this->_columnHeaders = array();
 
     foreach ($this->_columns as $tableName => $table) {
@@ -69,25 +158,28 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     }
 
     $this->_select = "SELECT " . implode(', ', $select) . " ";
-  }
+  }*/
 
   function from() {
     $this->_from = NULL;
 
     $this->_from = "
-         FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}";
-         
-    //used when address field is selected
-    if ($this->_addressField) {
-      $this->_from .= "
-             LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
-                       ON {$this->_aliases['civicrm_contact']}.id =
-                          {$this->_aliases['civicrm_address']}.contact_id AND
-                          {$this->_aliases['civicrm_address']}.is_primary = 1\n";
-    }
+         FROM  civicrm_membership {$this->_aliases['civicrm_membership']}\n
+         INNER JOIN civicrm_contact {$this->_aliases['civicrm_contact']} ON {$this->_aliases['civicrm_membership']}.contact_id = {$this->_aliases['civicrm_contact']}.id\n
+         LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
+            ON {$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_address']}.contact_id 
+            AND {$this->_aliases['civicrm_address']}.is_primary = 1\n
+         LEFT JOIN `".$this->_custom_fields->group['table_name']." {$this->_aliases['bezorg_gebied']} ON \n
+         ( \n
+            (SUBSTR(REPLACE($this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), 1, 4) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_cijfer_range['column_name']."`)\n
+            AND
+            (SUBSTR(REPLACE($this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), -2) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_letter_range['column_name']."`)\n
+          )\n
+          LEFT JOIN `civicrm_contact` {$this->_aliases['afdeling']} ON {$this->_aliases['bezorg_gebied']}.entity_id = {$this->_aliases['afdeling']}.id\n
+            ";
   }
 
-  function where() {
+  /*function where() {
     $clauses = array();
     foreach ($this->_columns as $tableName => $table) {
       if (array_key_exists('filters', $table)) {
@@ -129,14 +221,14 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     if ($this->_aclWhere) {
       $this->_where .= " AND {$this->_aclWhere} ";
     }
-  }
+  }*/
 
   function groupBy() {
     $this->_groupBy = " GROUP BY {$this->_aliases['civicrm_contact']}.id";
   }
 
   function orderBy() {
-    $this->_orderBy = " ORDER BY {$this->_aliases['civicrm_contact']}.sort_name, {$this->_aliases['civicrm_contact']}.id";
+    $this->_orderBy = " ORDER BY {$this->_aliases['afdeling']}.sort_name, {$this->_aliases['civicrm_address']}.city, {$this->_aliases['civicrm_address']}.postal_code, {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."`, {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."`, {$this->_aliases['civicrm_contact']}.`sort_name`";
   }
 
   function postProcess() {
