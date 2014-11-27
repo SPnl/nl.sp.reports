@@ -233,6 +233,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   function orderBy() {
     $this->_orderBy = " ORDER BY 
         `{$this->_aliases['afdeling']}`.`sort_name`, 
+        `{$this->_aliases['bezorg_gebied']}`.`{$this->_custom_fields->per_post['column_name']}`,
         `{$this->_aliases['bezorg_gebied']}`.`{$this->_custom_fields->name['column_name']}`,
         `{$this->_aliases['civicrm_address']}`.`postal_code` ,        
         `{$this->_aliases['civicrm_contact']}`.`sort_name`";
@@ -332,13 +333,25 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
       $previousRow = false;
       foreach ($rows as $row) {
         $newPage = false;
-        if ($previousRow === false || $previousRow['afdeling_id'] != $row['afdeling_id']) {
+        if ($previousRow === false || 
+            $previousRow['afdeling_afdeling_id'] != $row['afdeling_afdeling_id'] ||
+            $previousRow['bezorg_gebied_deliver_per_post'] != $row['bezorg_gebied_deliver_per_post'] ||
+            $previousRow['bezorg_gebied_deliver_area_name'] != $row['bezorg_gebied_deliver_area_name']
+        ) {
           for(;$i <= $labelsPerPage; $i++) {
             $pdf->addPdfLabel('');
           }
-          $pdf->AddPdfLabel('');
+          
+          $pdf->AddPdfLabel($label);
           $i = 2;
         }
+        
+        $label = '===========================\n';
+        $label .= $row['afdeling_afdeling'].'\n';
+        $label .= '===========================\n';
+        $label .= '\n';
+        $label .= 'Bezorggebied: '.$row['bezorg_gebied_deliver_area_name'].'\n';
+        $label .= 'Per post: '.($row['bezorg_gebied_deliver_per_post'] ? 'Ja' : 'Nee').'\n';
         
         $label = $this->formatRowAsLabel($row);
         $pdf->AddPdfLabel($label);
@@ -358,10 +371,9 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
   
   function formatRowAsLabel($row) {
-    $val = '';
-    foreach ($row as $k => $v) {
-      $val .= "$v\n";
-    }
+    $val = $row['civicrm_contact_display_name']. '\n';
+    $val .= $row['civicrm_address_street_address'].'\n';
+    $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city'].'\n';
     return $val;
   }
   
