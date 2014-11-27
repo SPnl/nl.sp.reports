@@ -231,7 +231,11 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
 
   function orderBy() {
-    $this->_orderBy = " ORDER BY {$this->_aliases['afdeling']}.sort_name, {$this->_aliases['civicrm_address']}.city, {$this->_aliases['civicrm_address']}.postal_code, {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."`, {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."`, {$this->_aliases['civicrm_contact']}.`sort_name`";
+    $this->_orderBy = " ORDER BY 
+        `{$this->_aliases['afdeling']}`.`sort_name`, 
+        `{$this->_aliases['bezorg_gebied']}`.`{$this->_custom_fields->name['column_name']}`,
+        `{$this->_aliases['civicrm_address']}`.`postal_code` ,        
+        `{$this->_aliases['civicrm_contact']}`.`sort_name`";
   }
 
   function postProcess() {
@@ -325,32 +329,25 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
       //build contact string that needs to be printed
       $val = NULL;
       $i = 1;
-      foreach ($rows as $row => $value) {
-        foreach ($value as $k => $v) {
-          $val .= "$v\n";
-        }
-
-        $pdf->AddPdfLabel($val);
-        $i++;
-        
+      $previousRow = false;
+      foreach ($rows as $row) {
         $newPage = false;
-        if ($i > 3) {
-          $newPage = true;
-        }
-        
-        if ($newPage) {
+        if ($previousRow === false || $previousRow['afdeling_id'] != $row['afdeling_id']) {
           for(;$i <= $labelsPerPage; $i++) {
-            $pdf->addPdfLabel('empty label: '.$i.' / '.$labelsPerPage);
+            $pdf->addPdfLabel('');
           }
-          $pdf->AddPdfLabel('new page label');
+          $pdf->AddPdfLabel('');
           $i = 2;
         }
         
+        $label = $this->formatRowAsLabel($row);
+        $pdf->AddPdfLabel($label);
+        $previousRow = $row;
+        
+        $i++;             
         if ($i >= $labelsPerPage) {
           $i = 1;
         }
-        
-        $val = '';
       }
       $pdf->Output($fileName, 'D');
       
@@ -358,6 +355,14 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     } else {
       parent::endPostProcess($rows);
     }
+  }
+  
+  function formatRowAsLabel($row) {
+    $val = '';
+    foreach ($row as $k => $v) {
+      $val .= "$v\n";
+    }
+    return $val;
   }
   
   function buildInstanceAndButtons() {
