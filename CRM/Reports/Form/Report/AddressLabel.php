@@ -3,6 +3,9 @@
 class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
 
   protected $_addressField = FALSE;
+  
+  protected $_csvSupported = FALSE;
+  protected $_add2groupSupported = FALSE;
 
   protected $_summary = NULL;
 
@@ -306,7 +309,12 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   
   function endPostProcess(&$rows = NULL) {
     if ($this->_outputMode == 'pdf') {
-      $format_name = 'Avery L7163';
+      $format_name = $this->_params['label_format'];
+      $format = CRM_Core_BAO_LabelFormat::getByName($format_name);
+      if (!$format) {
+        throw new Exception('Label format '.$format_name.' not found');
+      }
+      $labelsPerPage = $format['NX'] * $format['NY'];
       $fileName = 'labels.pdf';
       //echo 'label functionality'; exit();
       
@@ -316,12 +324,32 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
 
       //build contact string that needs to be printed
       $val = NULL;
+      $i = 1;
       foreach ($rows as $row => $value) {
         foreach ($value as $k => $v) {
           $val .= "$v\n";
         }
 
         $pdf->AddPdfLabel($val);
+        $i++;
+        
+        $newPage = false;
+        if ($i > 3) {
+          $newPage = true;
+        }
+        
+        if ($newPage) {
+          for(;$i <= $labelsPerPage; $i++) {
+            $pdf->addPdfLabel('empty label: '.$i.' / '.$labelsPerPage);
+          }
+          $pdf->AddPdfLabel('new page label');
+          $i = 2;
+        }
+        
+        if ($i >= $labelsPerPage) {
+          $i = 1;
+        }
+        
         $val = '';
       }
       $pdf->Output($fileName, 'D');
@@ -331,4 +359,36 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
       parent::endPostProcess($rows);
     }
   }
+  
+  function buildInstanceAndButtons() {
+    CRM_Report_Form_Instance::buildForm($this);
+
+    $label = $this->_id ? ts('Update Report') : ts('Create Report');
+
+    $this->addElement('submit', $this->_instanceButtonName, $label);
+
+    if ($this->_id) {
+      $this->addElement('submit', $this->_createNewButtonName, ts('Save a Copy') . '...');
+    }
+    if ($this->_instanceForm) {
+      $this->assign('instanceForm', TRUE);
+    }   
+
+    $label_formats = CRM_Core_BAO_LabelFormat::getList(true, 'label_format');
+    $this->addElement('select', 'label_format', ts('Label format'), $label_formats);
+
+    $label = ts('Print address labels');
+    $this->addElement('submit', $this->_pdfButtonName, $label);
+
+    $this->addChartOptions();
+    $this->addButtons(array(
+        array(
+          'type' => 'submit',
+          'name' => ts('Preview Report'),
+          'isDefault' => TRUE,
+        ),
+      )
+    );
+  }
+  
 }
