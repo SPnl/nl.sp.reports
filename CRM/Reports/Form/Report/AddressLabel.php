@@ -174,9 +174,9 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
             AND {$this->_aliases['civicrm_address']}.is_primary = 1\n
          LEFT JOIN `".$this->_custom_fields->group['table_name']."` `{$this->_aliases['bezorg_gebied']}` ON \n
          ( \n
-            (SUBSTR(REPLACE($this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), 1, 4) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_cijfer_range['column_name']."`)\n
+            (SUBSTR(REPLACE({$this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), 1, 4) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_cijfer_range['column_name']."`)\n
             AND
-            (SUBSTR(REPLACE($this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), -2) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_letter_range['column_name']."`)\n
+            (SUBSTR(REPLACE({$this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), -2) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_letter_range['column_name']."`)\n
           )\n
           LEFT JOIN `civicrm_contact` {$this->_aliases['afdeling']} ON {$this->_aliases['bezorg_gebied']}.entity_id = {$this->_aliases['afdeling']}.id\n
             ";
