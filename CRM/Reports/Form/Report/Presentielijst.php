@@ -617,7 +617,7 @@ GROUP BY  cv.label
           $pdfFullFilename = $config->templateCompileDir . CRM_Utils_File::makeFileName('CiviReport.pdf');
           file_put_contents($pdfFullFilename,
             CRM_Utils_PDF_Utils::html2pdf($content, "CiviReport.pdf",
-              TRUE, array('orientation' => 'portrait')
+              TRUE, array('orientation' => 'portrait','metric' => 'cm', 'margin_top' => '1', 'margin_left' => '1', 'margin_right' =>'1', 'margin_bottom' =>'1' )
             )
           );
           // generate Email Content
@@ -666,7 +666,7 @@ GROUP BY  cv.label
           //delete the object
           imagedestroy($chart);
         }
-        CRM_Utils_PDF_Utils::html2pdf($content, "CiviReport.pdf", FALSE, array('orientation' => 'portrait'));
+        CRM_Utils_PDF_Utils::html2pdf($content, "CiviReport.pdf", FALSE, array('orientation' => 'portrait','metric' => 'cm', 'margin_top' => '1', 'margin_left' => '1', 'margin_right' =>'1', 'margin_bottom' =>'1' ));
       }
       CRM_Utils_System::civiExit();
     }
