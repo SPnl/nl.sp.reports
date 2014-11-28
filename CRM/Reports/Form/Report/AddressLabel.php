@@ -282,12 +282,12 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
           $i = 2;
         }
         
-        $label = '===========================\n';
-        $label .= $row['afdeling_afdeling'].'\n';
-        $label .= '===========================\n';
-        $label .= '\n';
-        $label .= 'Bezorggebied: '.$row['bezorg_gebied_deliver_area_name'].'\n';
-        $label .= 'Per post: '.$row['bezorg_gebied_deliver_per_post'].'\n';
+        $label = "===========================\n";
+        $label .= $row['afdeling_afdeling']."\n";
+        $label .= "===========================\n";
+        $label .= "\n";
+        $label .= "Bezorggebied: ".$row['bezorg_gebied_deliver_area_name']."\n";
+        $label .= "Per post: ".$row['bezorg_gebied_deliver_per_post']."\n";
         
         $label = $this->formatRowAsLabel($row);
         $pdf->AddPdfLabel($label);
@@ -307,9 +307,9 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
   
   function formatRowAsLabel($row) {
-    $val = $row['civicrm_contact_display_name']. '\n';
-    $val .= $row['civicrm_address_street_address'].'\n';
-    $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city'].'\n';
+    $val = $row['civicrm_contact_display_name']. "\n";
+    $val .= $row['civicrm_address_street_address']."\n";
+    $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city']."\n";
     return $val;
   }
   
