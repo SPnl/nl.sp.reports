@@ -172,7 +172,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
          LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
             ON {$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_address']}.contact_id 
             AND {$this->_aliases['civicrm_address']}.is_primary = 1\n
-         LEFT JOIN `".$this->_custom_fields->group['table_name']." {$this->_aliases['bezorg_gebied']} ON \n
+         LEFT JOIN `".$this->_custom_fields->group['table_name']."` `{$this->_aliases['bezorg_gebied']}` ON \n
          ( \n
             (SUBSTR(REPLACE($this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), 1, 4) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_cijfer_range['column_name']."`)\n
             AND
