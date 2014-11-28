@@ -22,6 +22,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
           'id' => array(
             'required' => TRUE,
             'default' => TRUE,
+            'no_display' => true,
           ),
           'display_name' => array(
             'title' => ts('Contact Name'),
@@ -99,6 +100,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
             'title' => 'Afdeling ID',
             'default' => true,
             'name' => 'id',
+            'no_display' => true,
           )
         ),
         'grouping' => 'afdeling-fields',
@@ -140,29 +142,6 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     parent::preProcess();
   }
 
-  /*function select() {
-    $select = $this->_columnHeaders = array();
-
-    foreach ($this->_columns as $tableName => $table) {
-      if (array_key_exists('fields', $table)) {
-        foreach ($table['fields'] as $fieldName => $field) {
-          if (CRM_Utils_Array::value('required', $field) ||
-            CRM_Utils_Array::value($fieldName, $this->_params['fields'])
-          ) {
-            if ($tableName == 'civicrm_address') {
-              $this->_addressField = TRUE;
-            }
-            $select[] = "{$field['dbAlias']} as {$tableName}_{$fieldName}";
-            $this->_columnHeaders["{$tableName}_{$fieldName}"]['title'] = $field['title'];
-            $this->_columnHeaders["{$tableName}_{$fieldName}"]['type'] = CRM_Utils_Array::value('type', $field);
-          }
-        }
-      }
-    }
-
-    $this->_select = "SELECT " . implode(', ', $select) . " ";
-  }*/
-
   function from() {
     $this->_from = NULL;
 
@@ -182,50 +161,6 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
           LEFT JOIN `civicrm_contact` {$this->_aliases['afdeling']} ON {$this->_aliases['bezorg_gebied']}.entity_id = {$this->_aliases['afdeling']}.id\n
             ";
   }
-
-  /*function where() {
-    $clauses = array();
-    foreach ($this->_columns as $tableName => $table) {
-      if (array_key_exists('filters', $table)) {
-        foreach ($table['filters'] as $fieldName => $field) {
-          $clause = NULL;
-          if (CRM_Utils_Array::value('operatorType', $field) & CRM_Utils_Type::T_DATE) {
-            $relative = CRM_Utils_Array::value("{$fieldName}_relative", $this->_params);
-            $from     = CRM_Utils_Array::value("{$fieldName}_from", $this->_params);
-            $to       = CRM_Utils_Array::value("{$fieldName}_to", $this->_params);
-
-            $clause = $this->dateClause($field['name'], $relative, $from, $to, $field['type']);
-          }
-          else {
-            $op = CRM_Utils_Array::value("{$fieldName}_op", $this->_params);
-            if ($op) {
-              $clause = $this->whereClause($field,
-                $op,
-                CRM_Utils_Array::value("{$fieldName}_value", $this->_params),
-                CRM_Utils_Array::value("{$fieldName}_min", $this->_params),
-                CRM_Utils_Array::value("{$fieldName}_max", $this->_params)
-              );
-            }
-          }
-
-          if (!empty($clause)) {
-            $clauses[] = $clause;
-          }
-        }
-      }
-    }
-
-    if (empty($clauses)) {
-      $this->_where = "WHERE ( 1 ) ";
-    }
-    else {
-      $this->_where = "WHERE " . implode(' AND ', $clauses);
-    }
-
-    if ($this->_aclWhere) {
-      $this->_where .= " AND {$this->_aclWhere} ";
-    }
-  }*/
 
   function groupBy() {
     $this->_groupBy = " GROUP BY {$this->_aliases['civicrm_contact']}.id";
@@ -352,7 +287,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
         $label .= '===========================\n';
         $label .= '\n';
         $label .= 'Bezorggebied: '.$row['bezorg_gebied_deliver_area_name'].'\n';
-        $label .= 'Per post: '.($row['bezorg_gebied_deliver_per_post'] ? 'Ja' : 'Nee').'\n';
+        $label .= 'Per post: '.$row['bezorg_gebied_deliver_per_post'].'\n';
         
         $label = $this->formatRowAsLabel($row);
         $pdf->AddPdfLabel($label);
