@@ -270,9 +270,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
       foreach ($rows as $row) {
         $newPage = false;
         if ($previousRow === false || 
-            $previousRow['afdeling_afdeling_id'] != $row['afdeling_afdeling_id'] ||
-            $previousRow['bezorg_gebied_deliver_per_post'] != $row['bezorg_gebied_deliver_per_post'] ||
-            $previousRow['bezorg_gebied_deliver_area_name'] != $row['bezorg_gebied_deliver_area_name']
+            $previousRow['afdeling_afdeling_id'] != $row['afdeling_afdeling_id']
         ) {
           for(;$i <= $labelsPerPage; $i++) {
             $pdf->addPdfLabel('');
