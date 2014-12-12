@@ -192,6 +192,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
 
   function alterDisplay(&$rows) {
+    $per_post_options = CRM_Core_BAO_OptionValue::getOptionValuesAssocArray($this->_custom_fields->per_post['option_group_id']);
     // custom code to alter rows
     $entryFound = FALSE;
     $checkList = array();
@@ -239,6 +240,13 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
         );
         $rows[$rowNum]['civicrm_contact_display_name_link'] = $url;
         $rows[$rowNum]['civicrm_contact_display_name_hover'] = ts("View Contact Summary for this Contact.");
+        $entryFound = TRUE;
+      }
+      
+      if (array_key_exists('bezorg_gebied_deliver_per_post', $row) &&
+          isset($per_post_options[$row['bezorg_gebied_deliver_per_post']])
+      ) {
+        $rows[$rowNum]['bezorg_gebied_deliver_per_post'] = $per_post_options[$row['bezorg_gebied_deliver_per_post']];
         $entryFound = TRUE;
       }
 
@@ -308,6 +316,9 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     $val = $row['civicrm_contact_display_name']. "\r\n";
     $val .= $row['civicrm_address_street_address']."\r\n";
     $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city']."\r\n";
+    $val .= "\r\n\r\n";
+    $val .= $row['civicrm_contact_id'] ."\r\n";
+    $val .= $row['bezorg_gebied_deliver_area_name'] . ": ".$row['bezorg_gebied_deliver_per_post'];
     return $val;
   }
   
