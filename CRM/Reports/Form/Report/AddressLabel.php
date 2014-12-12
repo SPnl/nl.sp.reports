@@ -287,9 +287,6 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
 	        $label = "===========================\r\n";
 	        $label .= $row['afdeling_afdeling']."\r\n";
 	        $label .= "===========================\r\n";
-	        $label .= "\r\n";
-	        $label .= "Bezorggebied: ".$row['bezorg_gebied_deliver_area_name']."\r\n";
-	        $label .= "Per post: ".$row['bezorg_gebied_deliver_per_post']."\r\n";
           
           $pdf->AddPdfLabel($label);
           $i = 2;
@@ -316,9 +313,9 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     $val = $row['civicrm_contact_display_name']. "\r\n";
     $val .= $row['civicrm_address_street_address']."\r\n";
     $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city']."\r\n";
-    $val .= "\r\n\r\n";
+    $val .= "\r\n";
     $val .= $row['civicrm_contact_id'] ."\r\n";
-    $val .= $row['bezorg_gebied_deliver_area_name'] . ": ".$row['bezorg_gebied_deliver_per_post'];
+    $val .= (!empty($row['bezorg_gebied_deliver_area_name']) ? $row['bezorg_gebied_deliver_area_name'] . ": " : "").$row['bezorg_gebied_deliver_per_post'];
     return $val;
   }
   
