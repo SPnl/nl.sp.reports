@@ -134,7 +134,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
     $this->_custom_fields->eind_cijfer_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "eind_cijfer_range", "custom_group_id" => $this->_custom_fields->group['id']));
     $this->_custom_fields->start_letter_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "start_letter_range", "custom_group_id" => $this->_custom_fields->group['id']));
     $this->_custom_fields->eind_letter_range 	= civicrm_api3('CustomField', 'getsingle', array("name" => "eind_letter_range", "custom_group_id" => $this->_custom_fields->group['id']));
-    $this->_custom_fields->per_post 			= civicrm_api3('CustomField', 'getsingle', array("name" => "Per_Post", "custom_group_id" => $this->_custom_fields->group['id']));
+    $this->_custom_fields->per_post 			= civicrm_api3('CustomField', 'getsingle', array("name" => "Bezorging_per", "custom_group_id" => $this->_custom_fields->group['id']));
   }
 
   function preProcess() {
