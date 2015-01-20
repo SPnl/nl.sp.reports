@@ -1,3 +1,3 @@
-# Rapportsjavblonen voor CiviCRM
+# Rapportsjablonen voor CiviCRM
 
-Deze extensie bevat rapport sjablonen voor civicrm.
+Deze extensie bevat rapport sjablonen voor CiviCRM.
