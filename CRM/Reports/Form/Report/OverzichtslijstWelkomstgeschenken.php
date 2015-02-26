@@ -57,7 +57,7 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenken extends CRM_Repo
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' =>
         array(
-          'sort_name' =>
+          'display_name' =>
           array('title' => ts('Contact Name'),
             'required' => TRUE,
             'default' => TRUE,

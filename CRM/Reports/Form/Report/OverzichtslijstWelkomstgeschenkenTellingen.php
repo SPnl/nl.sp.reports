@@ -57,7 +57,7 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenkenTellingen extends
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' =>
         array(
-          'sort_name' =>
+          'display_name' =>
           array('title' => ts('Contact Name'),
             'default' => FALSE,
             'no_repeat' => TRUE,
@@ -283,11 +283,6 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenkenTellingen extends
     }
   }
 
-  function where() {
-	parent::where();
-	$this->_where .= " AND value_welkomstcadeau_rood_4_civireport.cadeau_10 IS NOT NULL AND value_welkomstcadeau_rood_4_civireport.cadeau_10 <> ''";
-  }
-
   function postProcess() {
 
     $this->beginPostProcess();
@@ -295,6 +290,7 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenkenTellingen extends
     // get the acl clauses built before we assemble the query
     $this->buildACLClause($this->_aliases['civicrm_contact']);
     $sql = $this->buildQuery(TRUE);
+
     $rows = array();
     $this->buildRows($sql, $rows);
     $this->formatDisplay($rows);
