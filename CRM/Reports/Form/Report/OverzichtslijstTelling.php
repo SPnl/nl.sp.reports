@@ -37,13 +37,12 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         'order_bys' => array(
           'provincie_display_name' => array(
             'title' => ts('Provincie'),
-            'default' => TRUE,
             'section' => true,
             'name' => 'display_name'
           ),
         ),
         'group_bys' => array(
-          'regio_id' => array(
+          'provincie_id' => array(
             'title' => ts('Provincie'),
             'default' => TRUE,
             'name' => 'id'
@@ -70,7 +69,6 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         'order_bys' => array(
           'regio_display_name' => array(
             'title' => ts('Regio'),
-            'default' => TRUE,
             'section' => true,
             'name' => 'display_name'
           ),
@@ -103,7 +101,6 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         'order_bys' => array(
           'afdeling_display_name' => array(
             'title' => ts('Afdeling'),
-            'default' => TRUE,
             'section' => true,
             'name' => 'display_name'
           ),
@@ -141,7 +138,6 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         'order_bys' => array(
           'membership_type_id' => array(
             'title' => ts('Membership Type'),
-            'default' => true,
             'section' => true,
           )
         ),
@@ -174,7 +170,6 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         'order_bys' => array (
           'name' => array (
             'title' => ts('Status'),
-            'default' => true,
             'section' => true,
           ),          
         ), 
