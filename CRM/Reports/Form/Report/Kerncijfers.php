@@ -27,48 +27,55 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
 		$this->_membershipTypes    = CRM_Member_PseudoConstant::membershipType();
 		$this->_membershipStatuses = CRM_Member_PseudoConstant::membershipStatus();
 
+		$lastWeek = new \DateTime('monday last week');
 		$thisWeek = new \DateTime('monday this week');
 		$thisYear = new \DateTime('01/01');
 		$now      = new \DateTime;
 
 		$this->_columnHeaders = array(
 			'name'       => array('title' => 'Naam'),
-			'count_week' => array('title' => 'Week ' . (int) $thisWeek->format('W')),
+			'count_lastweek' => array('title' => 'Wk&nbsp;' . (int) $lastWeek->format('W')),
+			'count_thisweek' => array('title' => 'Wk&nbsp;' . (int) $thisWeek->format('W')),
 			'count_year' => array('title' => $thisWeek->format('Y')),
 		);
 
 		$rows = array(
 			array(
 				'name'       => 'Ledencijfer SP',
-				'count_week' => $this->_getCount('lid_sp'),
+				'count_year' => $this->_getCount('lid_sp'),
 			),
 			array(
 				'name'       => 'Ledencijfer ROOD',
-				'count_week' => $this->_getCount('lid_rood'),
+				'count_year' => $this->_getCount('lid_rood'),
 			),
 			array(
 				'name'       => 'Ingeschreven SP-leden',
-				'count_week' => $this->_getCount('lid_sp_new', $thisWeek, $now),
+				'count_lastweek' => $this->_getCount('lid_sp_new', $lastWeek, $thisWeek),
+				'count_thisweek' => $this->_getCount('lid_sp_new', $thisWeek, $now),
 				'count_year' => $this->_getCount('lid_sp_new', $thisYear, $now),
 			),
 			array(
 				'name'       => 'Uitgeschreven SP-leden',
-				'count_week' => $this->_getCount('lid_sp_end', $thisWeek, $now),
+				'count_lastweek' => $this->_getCount('lid_sp_end', $lastWeek, $thisWeek),
+				'count_thisweek' => $this->_getCount('lid_sp_end', $thisWeek, $now),
 				'count_year' => $this->_getCount('lid_sp_end', $thisYear, $now),
 			),
 			array(
 				'name'       => 'Overleden SP-leden',
-				'count_week' => $this->_getCount('lid_sp_deceased', $thisWeek, $now),
+				'count_lastweek' => $this->_getCount('lid_sp_deceased', $lastWeek, $thisWeek),
+				'count_thisweek' => $this->_getCount('lid_sp_deceased', $thisWeek, $now),
 				'count_year' => $this->_getCount('lid_sp_deceased', $thisYear, $now),
 			),
 			array(
 				'name'       => 'Ingeschreven ROOD-leden',
-				'count_week' => $this->_getCount('lid_rood_new', $thisWeek, $now),
+				'count_lastweek' => $this->_getCount('lid_rood_new', $lastWeek, $thisWeek),
+				'count_thisweek' => $this->_getCount('lid_rood_new', $thisWeek, $now),
 				'count_year' => $this->_getCount('lid_rood_new', $thisYear, $now),
 			),
 			array(
 				'name'       => 'Uitgeschreven ROOD-leden',
-				'count_week' => $this->_getCount('lid_rood_end', $thisWeek, $now),
+				'count_lastweek' => $this->_getCount('lid_rood_end', $lastWeek, $thisWeek),
+				'count_thisweek' => $this->_getCount('lid_rood_end', $thisWeek, $now),
 				'count_year' => $this->_getCount('lid_rood_end', $thisYear, $now),
 			),
 		);
