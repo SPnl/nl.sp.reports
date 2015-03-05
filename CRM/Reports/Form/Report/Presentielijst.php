@@ -68,6 +68,7 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
           array(
           //  'no_display' => TRUE,
             'required' => TRUE,
+            'title' => 'ID',
           ),
           'sort_name_linked' =>
           array('title' => ts('Participant Name'),
@@ -75,6 +76,8 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
             'required' => TRUE,
             'no_repeat' => TRUE,
             'dbAlias' => 'contact_civireport.sort_name',
+          ),
+          'display_name' => array('title' => ts('Name'),
           ),
           'first_name' => array('title' => ts('First Name'),
           ),
@@ -449,7 +452,7 @@ GROUP BY  cv.label
     if (array_key_exists('autograph', $this->_params) &&
       CRM_Utils_Array::value('autograph', $this->_params)) {
       $select[] = " '' as autograph";
-      $this->_columnHeaders['autograph']['title'] = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handtekening&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
+      $this->_columnHeaders['autograph']['title'] = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Handtekening&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;';
     }
 
 
