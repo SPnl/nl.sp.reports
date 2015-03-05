@@ -55,24 +55,21 @@
                 {$l}else{$r}
                 {$l}assign var=printValue value=$row.{$column}{$r}
                 {$l}/if{$r}
-
+                {$l}if !$smarty.foreach.rows.first{$r}
+                    </table>
+                {$l}/if{$r}
                         <h{$h}>{$section.title}: {$l}$printValue|default:"<em>none</em>"{$r}
                             ({$l}sectionTotal key=$row.{$column} depth={$smarty.foreach.sections.index}{$r})
                         </h{$h}>
+                        <table class="report-layout display">
+                        <tr>{$l}$tableHeader{$r}</tr>
                 {$l}/if{$r}
             {/foreach}
         {/capture}
 
 
     {foreach from=$rows item=row key=rowid name=rows}
-            {if ($row.new_section)}
-                {if !$smarty.foreach.rows.first}
-                    </table>
-                {/if}
-                {eval var=$sectionHeaderTemplate}
-                <table class="report-layout display">
-                <tr>{$tableHeader}</tr>
-            {/if}
+            {eval var=$sectionHeaderTemplate}
             <tr  class="{cycle values="odd-row,even-row"} {$row.class} crm-report" id="crm-report_{$rowid}">
                 {foreach from=$columnHeaders item=header key=field}
                     {assign var=fieldLink value=$field|cat:"_link"}

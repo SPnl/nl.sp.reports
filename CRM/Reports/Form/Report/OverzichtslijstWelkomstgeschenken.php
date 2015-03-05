@@ -308,14 +308,7 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenken extends CRM_Repo
     $contributionStatus = CRM_Contribute_PseudoConstant::contributionStatus();
     $paymentInstruments = CRM_Contribute_PseudoConstant::paymentInstrument();
 
-    $previousRow = false;
     foreach ($rows as $rowNum => $row) {
-
-      if ($previousRow === false || !$this->compareSectionHeaders($row, $previousRow)) {
-        $rows[$rowNum]['new_section'] = true;
-      } else {
-        $rows[$rowNum]['new_section'] = false;
-      }
       if (!empty($this->_noRepeats) && $this->_outputMode != 'csv') {
         // not repeat contact display names if it matches with the one
         // in previous row
@@ -393,18 +386,6 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenken extends CRM_Repo
         break;
       }
     }
-  }
-
-  function compareSectionHeaders($row, $previousRow) {
-    foreach($this->_sections as $key => $section) {
-      if (isset($row[$key]) && isset($previousRow[$key]) && $row[$key] == $previousRow[$key]) {
-        continue;
-      } elseif (!isset($row[$key]) && !isset($previousRow[$key])) {
-        continue;
-      }
-      return false;
-    }
-    return true;
   }
   
   
