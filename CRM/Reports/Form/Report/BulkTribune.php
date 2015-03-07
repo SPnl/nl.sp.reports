@@ -205,10 +205,23 @@ class CRM_Reports_Form_Report_BulkTribune extends CRM_Report_Form {
       }
     }
 
-    $this->_select = "SELECT " . implode(', ', $select) . " ";
+    $bezorggebiedcontact = CRM_Bezorggebieden_Config_BezorggebiedContact::singleton();
+    $bezorggebied = CRM_Bezorggebieden_Config_Bezorggebied::singleton();
+    $this->_select = "SELECT " . implode(', ', $select) . ", `civicrm_contact_afdeling`.`id` AS `civicrm_contact_afdeling_id`, `civicrm_contact_afdeling`.`display_name` AS `civicrm_contact_afdeling_display_name` ";
+    $this->_select .= ", `{$bezorggebiedcontact->getCustomGroupBezorggebiedContact('table_name')}`.`".$bezorggebiedcontact->getCustomFieldBezorggebied('column_name')."` AS `bezorggebied_contact_bezorggebied`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getNaamField('column_name')."` AS `bezorggebied_name`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getStartCijferRangeField('column_name')."` AS `bezorggebied_start_cijfer_range`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getEindCijferRangeField('column_name')."` AS `bezorggebied_eind_cijfer_range`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getStartLetterRangeField('column_name')."` AS `bezorggebied_start_letter_range`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getEindLetterRangeField('column_name')."` AS `bezorggebied_eind_letter_range`";
+    $this->_select .= ", `".$bezorggebied->getCustomGroup('table_name')."`.`".$bezorggebied->getBezorgingPerField('column_name')."` AS `bezorggebied_bezorging_per`";
   }
 
   function from() {
+
+    $bezorggebiedcontact = CRM_Bezorggebieden_Config_BezorggebiedContact::singleton();
+    $bezorggebied = CRM_Bezorggebieden_Config_Bezorggebied::singleton();
+
     $this->_from = NULL;
     $this->_from = "
          FROM  civicrm_contact {$this->_aliases['civicrm_contact']} {$this->_aclFrom}
@@ -228,6 +241,11 @@ class CRM_Reports_Form_Report_BulkTribune extends CRM_Report_Form {
                           {$this->_aliases['civicrm_address']}.contact_id AND
                           {$this->_aliases['civicrm_address']}.is_primary = 1\n";
     }
+    $this->_from .= "
+      LEFT JOIN `".$bezorggebiedcontact->getCustomGroupBezorggebiedContact('table_name')."` ON `{$bezorggebiedcontact->getCustomGroupBezorggebiedContact('table_name')}`.`entity_id` = {$this->_aliases['civicrm_contact']}.id
+      LEFT JOIN `".$bezorggebied->getCustomGroup('table_name')."` ON `{$bezorggebied->getCustomGroup('table_name')}`.`id` = `{$bezorggebiedcontact->getCustomGroupBezorggebiedContact('table_name')}`.`".$bezorggebiedcontact->getCustomFieldBezorggebied('column_name')."`
+      LEFT JOIN `civicrm_contact` `civicrm_contact_afdeling` ON `civicrm_contact_afdeling`.`id` = `{$bezorggebied->getCustomGroup('table_name')}`.`entity_id`
+    ";
   }
 
   function groupBy() {
@@ -322,34 +340,23 @@ class CRM_Reports_Form_Report_BulkTribune extends CRM_Report_Form {
       }
 		
 	  if (array_key_exists('civicrm_membership_sp_afdeling', $row) && array_key_exists('civicrm_address_postcode_gebied', $row) && array_key_exists('civicrm_address_postcode_range', $row) && array_key_exists('civicrm_address_postcode_methode', $row)) {
-		$dao = CRM_CORE_DAO::executeQuery("
-			SELECT `civicrm_value_bezorggebieden_6`.*, `civicrm_contact`.`organization_name`
-			FROM `civicrm_value_bezorggebieden_6`
-			LEFT JOIN `civicrm_contact` ON `civicrm_contact`.`id` = `civicrm_value_bezorggebieden_6`.`entity_id`
-			WHERE (
-				(SUBSTR(REPLACE('".$row['civicrm_address_postal_code']."', ' ', ''), 1, 4) BETWEEN `start_cijfer_range_10` AND `eind_cijfer_range_12`)
-					AND
-				(SUBSTR(REPLACE('".$row['civicrm_address_postal_code']."', ' ', ''), -2) BETWEEN `start_letter_range_11` AND `eind_letter_range_13`)
-			)
-			ORDER BY FIELD('bezorging_per_128', 'Bezorger', 'Afdeling') ASC
-		");
-		if($dao->fetch()) {
-			$dao->fetch();
-			$url = CRM_Utils_System::url("civicrm/contact/view",
-			  'reset=1&cid=' . $dao->entity_id,
-			  $this->_absoluteUrl
-			);
-			$rows[$rowNum]['civicrm_membership_sp_afdeling_link'] = $url;
-			$rows[$rowNum]['civicrm_membership_sp_afdeling'] = $dao->organization_name;
-			$rows[$rowNum]['civicrm_address_postcode_gebied'] = $dao->bezorggebied_naam_9;
-			$rows[$rowNum]['civicrm_address_postcode_range'] = $dao->start_cijfer_range_10." ". $dao->start_letter_range_11." - ". $dao->eind_cijfer_range_12." ". $dao->eind_letter_range_13;
-			$rows[$rowNum]['civicrm_address_postcode_methode'] = $dao->bezorging_per_128;
-		} else {
-			$rows[$rowNum]['civicrm_membership_sp_afdeling'] = "Drukker";
-			$rows[$rowNum]['civicrm_address_postcode_gebied'] = "-";
-			$rows[$rowNum]['civicrm_address_postcode_range'] = "-";
-			$rows[$rowNum]['civicrm_address_postcode_methode'] = "Per Post";
-		}
+      $entryFound = true;
+      if (empty($row['bezorggebied_contact_bezorggebied']) || ($row[''] == 'Post')) {
+        $rows[$rowNum]['civicrm_membership_sp_afdeling'] = "Drukker";
+        $rows[$rowNum]['civicrm_address_postcode_gebied'] = "-";
+        $rows[$rowNum]['civicrm_address_postcode_range'] = "-";
+        $rows[$rowNum]['civicrm_address_postcode_methode'] = "Per Post";
+      } else {
+        $url = CRM_Utils_System::url("civicrm/contact/view",
+          'reset=1&cid=' . $row['civicrm_contact_afdeling_id'],
+          $this->_absoluteUrl
+        );
+        $rows[$rowNum]['civicrm_membership_sp_afdeling_link'] = $url;
+        $rows[$rowNum]['civicrm_membership_sp_afdeling'] = $row['civicrm_contact_afdeling_display_name'];
+        $rows[$rowNum]['civicrm_address_postcode_gebied'] = $row['bezorggebied_name'];
+        $rows[$rowNum]['civicrm_address_postcode_range'] = $row['bezorggebied_start_cijfer_range']." ". $row['bezorggebied_start_letter_range']." - ". $row['bezorggebied_eind_cijfer_range']." ". $row['bezorggebied_eind_letter_range'];
+        $rows[$rowNum]['civicrm_address_postcode_methode'] = $row['bezorggebied_bezorging_per'];
+      }
 	  }
 	  
 
