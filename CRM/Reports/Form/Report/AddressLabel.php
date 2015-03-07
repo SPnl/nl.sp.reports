@@ -143,6 +143,7 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
 
   function from() {
+    $bezorggebied_config = CRM_Bezorggebieden_Config_BezorggebiedContact::singleton();
     $this->_from = NULL;
 
     $this->_from = "
@@ -152,14 +153,20 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
          LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
             ON {$this->_aliases['civicrm_contact']}.id = {$this->_aliases['civicrm_address']}.contact_id 
             AND {$this->_aliases['civicrm_address']}.is_primary = 1\n
-         LEFT JOIN `".$this->_custom_fields->group['table_name']."` `{$this->_aliases['bezorg_gebied']}` ON \n
-         ( \n
-            (SUBSTR(REPLACE({$this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), 1, 4) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_cijfer_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_cijfer_range['column_name']."`)\n
-            AND
-            (SUBSTR(REPLACE({$this->_aliases['civicrm_address']}.`postal_code`, ' ', ''), -2) BETWEEN {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->start_letter_range['column_name']."` AND {$this->_aliases['bezorg_gebied']}.`".$this->_custom_fields->eind_letter_range['column_name']."`)\n
-          )\n
+         LEFT JOIN `".$bezorggebied_config->getCustomGroupBezorggebiedContact('table_name')."` ON `{$this->_aliases['civicrm_contact']}`.`id` = `".$bezorggebied_config->getCustomGroupBezorggebiedContact('table_name')."`.`entity_id`
+         LEFT JOIN `".$this->_custom_fields->group['table_name']."` `{$this->_aliases['bezorg_gebied']}` ON `{$this->_aliases['bezorg_gebied']}`.`id` = `".$bezorggebied_config->getCustomGroupBezorggebiedContact('table_name')."`.`".$bezorggebied_config->getCustomFieldBezorggebied('column_name')."` \n
           LEFT JOIN `civicrm_contact` {$this->_aliases['afdeling']} ON {$this->_aliases['bezorg_gebied']}.entity_id = {$this->_aliases['afdeling']}.id\n
             ";
+  }
+
+  function where() {
+    parent::where();
+    $bezorggebied_config = CRM_Bezorggebieden_Config_BezorggebiedContact::singleton();
+    $this->_where .= " AND (
+      ".$bezorggebied_config->getCustomGroupBezorggebiedContact('table_name').".".$bezorggebied_config->getCustomFieldBezorggebied('column_name')." IS NOT NULL
+      AND ".$bezorggebied_config->getCustomGroupBezorggebiedContact('table_name').".".$bezorggebied_config->getCustomFieldBezorggebied('column_name')." > 0
+      AND `{$this->_aliases['bezorg_gebied']}`.`{$this->_custom_fields->per_post['column_name']}` != 'Post'
+      )";
   }
 
   function groupBy() {
@@ -310,12 +317,12 @@ class CRM_Reports_Form_Report_AddressLabel extends CRM_Report_Form {
   }
   
   function formatRowAsLabel($row) {
-    $val = $row['civicrm_contact_display_name']. "\r\n";
+    $val = $row['civicrm_contact_id'] ."\r\n";
+    $val .= $row['civicrm_contact_display_name']. "\r\n";
     $val .= $row['civicrm_address_street_address']."\r\n";
     $val .= $row['civicrm_address_postal_code'].' '.$row['civicrm_address_city']."\r\n";
     $val .= "\r\n";
-    $val .= $row['civicrm_contact_id'] ."\r\n";
-    $val .= (!empty($row['bezorg_gebied_deliver_area_name']) ? $row['bezorg_gebied_deliver_area_name'] . ": " : "").$row['bezorg_gebied_deliver_per_post'];
+    $val .= $row['bezorg_gebied_deliver_per_post'].(!empty($row['bezorg_gebied_deliver_area_name']) ?  ": ".$row['bezorg_gebied_deliver_area_name'] : "");
     return $val;
   }
   
