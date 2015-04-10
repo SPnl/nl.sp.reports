@@ -16,7 +16,8 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
   protected $_exposeContactID = FALSE;
   
   function __construct() {
-    
+    $config = CRM_Geostelsel_Config::singleton();
+
     $this->_columns = array(
      'civicrm_provincie' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
@@ -196,6 +197,28 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         ),
         'grouping' => 'contact-fields',
       ),
+      'civicrm_address_gemeente' => array(
+        'fields' => array(
+          'gemeente' => array(
+            'title' => ts('gemeente'),
+            'name' => $config->getPostcodeGemeenteCustomField('column_name'),
+          )
+        ),
+        'order_bys' => array(
+          'gemeente' => array(
+            'title' => ts('Gemeente'),
+            'section' => true,
+            'name' => $config->getPostcodeGemeenteCustomField('column_name'),
+          ),
+        ),
+        'group_bys' => array(
+          'gemeente' => array(
+            'title' => ts('Gemeente'),
+            'default' => TRUE,
+            'name' => $config->getPostcodeGemeenteCustomField('column_name'),
+          ),
+        ),
+      ),
       'civicrm_contact' => array(
         'dao' => 'CRM_Contact_DAO_Contact',
         'fields' => array(
@@ -227,6 +250,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     );
     $this->_groupFilter = TRUE;
     $this->_tagFilter = FALSE;
+    $this->_addressField = true;
     parent::__construct();
   }
 
@@ -263,14 +287,13 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
                ";
                              
 
-    //used when address field is selected
-    if ($this->_addressField) {
-      $this->_from .= "
-             LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
-                       ON {$this->_aliases['civicrm_contact']}.id =
-                          {$this->_aliases['civicrm_address']}.contact_id AND
-                          {$this->_aliases['civicrm_address']}.is_primary = 1\n";
-    }
+    $this->_from .= "
+           LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
+                     ON {$this->_aliases['civicrm_contact']}.id =
+                        {$this->_aliases['civicrm_address']}.contact_id AND
+                        {$this->_aliases['civicrm_address']}.is_primary = 1
+            LEFT JOIN `".$config->getPostcodeCustomGroup('table_name')."` {$this->_aliases['civicrm_address_gemeente']}
+                    ON {$this->_aliases['civicrm_address_gemeente']}.entity_id = {$this->_aliases['civicrm_address']}.id \n";
     //used when email field is selected
     if ($this->_emailField) {
       $this->_from .= "
