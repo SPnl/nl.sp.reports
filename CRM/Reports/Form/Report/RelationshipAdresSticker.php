@@ -13,6 +13,16 @@ class CRM_Reports_Form_Report_RelationshipAdresSticker extends CRM_Report_Form_C
     $this->_columns['civicrm_contact_b']['fields']['sort_name_b']['required'] = true;
     $this->_columns['civicrm_contact_b']['fields']['sort_name_b']['name'] = 'display_name';
 
+    $this->_columns['civicrm_contact_b']['order_bys'] =  array(
+      'sort_name_b' => array(
+        'title' => ts('Contact B'),
+        'name' => 'display_name',
+        'default' => '1',
+        'default_weight' => '0',
+        'default_order' => 'ASC'
+      )
+    );
+
     $this->_columns['civicrm_relationship']['filters']['is_active']['default'] = 1;
     $this->_columns['civicrm_relationship']['filters']['relationship_type_id']['operatorType'] = CRM_Report_Form::OP_MULTISELECT;
     $this->_columns['civicrm_relationship']['filters']['relationship_type_id']['options'] = CRM_Contact_BAO_Relationship::getContactRelationshipType(NULL, NULL, NULL, 'Individual', FALSE, 'label', FALSE);
@@ -37,10 +47,26 @@ class CRM_Reports_Form_Report_RelationshipAdresSticker extends CRM_Report_Form_C
       'name' => 'country_id',
       'required' => true,
     );
+
+    $this->_columns['civicrm_address']['order_bys'] = array(
+      'postal_code' => array(
+        'title' => ts('Postal code'),
+        'name' => 'postal_code',
+        'default' => '1',
+        'default_weight' => '1',
+        'default_order' => 'ASC'
+      )
+    );
   }
 
   function orderBy() {
-    $this->_orderBy = " ORDER BY {$this->_aliases['civicrm_contact']}.sort_name";
+    $this->_orderBy  = "";
+    $this->_sections = array();
+    $this->storeOrderByArray();
+    if(!empty($this->_orderByArray) && !$this->_rollup == 'WITH ROLLUP'){
+      $this->_orderBy = "ORDER BY " . implode(', ', $this->_orderByArray);
+    }
+    $this->assign('sections', $this->_sections);
   }
 
   function from() {
@@ -325,7 +351,7 @@ class CRM_Reports_Form_Report_RelationshipAdresSticker extends CRM_Report_Form_C
   }
 
   function formatRowAsLabel($row) {
-    $val .= "";
+    $val = "";
     $val .= $row['civicrm_contact_b_sort_name_b'] . "\r\n";
     $val .= $row['civicrm_contact_sort_name_a']. "\r\n";
     $val .= $row['civicrm_address_street_address']."\r\n";
