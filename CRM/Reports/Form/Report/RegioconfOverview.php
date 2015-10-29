@@ -118,9 +118,9 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
     $whereClause  = count($this->_whereClauses) > 0 ? array_shift($this->_whereClauses) : "";
     if($whereClause) {
       $whereClauses = [
-        str_replace($this->_aliases['civicrm_participant'], 'cp0', $whereClause),
-        str_replace($this->_aliases['civicrm_participant'], 'cp1', $whereClause),
-        str_replace($this->_aliases['civicrm_participant'], 'cp2', $whereClause),
+        " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp0', $whereClause),
+        " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp1', $whereClause),
+        " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp2', $whereClause),
       ];
     } else {
       $whereClauses = ['', '', ''];
@@ -156,11 +156,11 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
                     LEFT OUTER JOIN civicrm_membership cm
                     ON cm.contact_id = {$this->_aliases['civicrm_contact']}.id AND cm.status_id IN ("  . implode(',',$membershipStatuses) . ") AND cm.membership_type_id IN ("  . implode(',',$membershipTypes) . ")
                     LEFT OUTER JOIN civicrm_participant cp0
-                    ON cp0.contact_id = {$this->_aliases['civicrm_contact']}.id AND {$whereClauses[0]} AND cp0.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp0.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[0]} AND cp0.status_id IN ("  . implode(',',$participantStatuses) . ")
                     LEFT OUTER JOIN civicrm_participant cp1
-                    ON cp1.contact_id = {$this->_aliases['civicrm_contact']}.id AND {$whereClauses[1]} AND cp1.role_id = {$participantRoleDeelnemer} AND cp1.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp1.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[1]} AND cp1.role_id = {$participantRoleDeelnemer} AND cp1.status_id IN ("  . implode(',',$participantStatuses) . ")
                     LEFT OUTER JOIN civicrm_participant cp2
-                    ON cp2.contact_id = {$this->_aliases['civicrm_contact']}.id AND {$whereClauses[2]} AND cp2.role_id = {$participantRoleGast} AND cp2.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp2.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[2]} AND cp2.role_id = {$participantRoleGast} AND cp2.status_id IN ("  . implode(',',$participantStatuses) . ")
                     ";
 
   }
