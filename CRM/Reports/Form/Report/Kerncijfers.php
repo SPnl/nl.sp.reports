@@ -81,58 +81,62 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
       $wkEnd->add(new \DateInterval('P1W'));
 
       $data['wk' . $wf] = [
-        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], NULL, $wk, 'join'),
-        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], $wk, $wkEnd, 'join'),
-        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['Grace', 'Expired', 'Cancelled'], $wk, $wkEnd, 'end'),
-        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['Deceased'], $wk, $wkEnd, 'end'),
-        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], NULL, $wk, 'join'),
-        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], $wk, $wkEnd, 'join'),
-        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['Grace', 'Expired', 'Cancelled', 'Deceased'], $wk, $wkEnd, 'end'),
-        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'other_donateurs' => $this->_getCount(['SP Donateur'], ['New', 'Current'], NULL, $wkEnd, 'join'),
-        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], ['New', 'Current'], NULL, $wkEnd, 'join'),
+        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $wk, 'join'),
+        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'join'),
+        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'end_not_deceased'),
+        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'deceased'),
+        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $wkEnd, 'join'),
+        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $wk, 'join'),
+        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $wk, $wkEnd, 'join'),
+        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $wk, $wkEnd, 'end'),
+        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $wkEnd, 'join'),
+        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], NULL, $wkEnd, 'join'),
+        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], NULL, $wkEnd, 'join'),
+        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], NULL, $wkEnd, 'join'),
+        'other_donateurs' => $this->_getCount(['SP Donateur'], NULL, $wkEnd, 'join'),
+        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], NULL, $wkEnd, 'join'),
       ];
     }
 
     // Cijfers per jaar
 
     for ($year = 0; $year < $yearCount; $year++) {
-      $yr = new \DateTime('01/01');
+      $yr    = new \DateTime('01/01');
+      $yrEnd = clone $yr;
       if ($year > 0) {
-        $yr->sub(new \DateInterval('P' . $year . 'Y'));
+        $interval = new \DateInterval('P' . $year . 'Y');
+        $yr->sub($interval);
+        $yrEnd->sub($interval)->add(new \DateInterval('P1Y'));
+
         $yf    = (int) $yr->format('Y');
         $key   = (int) $yr->format('Y');
         $title = '(' . $yf . ')';
       }
       else {
-        $yf    = (int) $yr->format('Y');
+        $yf = (int) $yr->format('Y');
+        $yrEnd->add(new \DateInterval('P364D')); // 364 dagen ivm einddata 31-12
+
         $key   = 'ycur';
         $title = $yf;
       }
       $this->_columnHeaders[$key] = ['title' => $title, 'type' => 1];
 
-      $yrEnd = clone $yr;
-      $yrEnd->add(new \DateInterval('P1Y'));
 
       $data[$key] = [
-        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], NULL, $yr, 'join'),
-        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], $yr, $yrEnd, 'join'),
-        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['Grace', 'Expired', 'Cancelled'], $yr, $yrEnd, 'end'),
-        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['Deceased'], $yr, $yrEnd, 'end'),
-        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], NULL, $yr, 'join'),
-        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], $yr, $yrEnd, 'join'),
-        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['Grace', 'Expired', 'Cancelled', 'Deceased'], $yr, $yrEnd, 'end'),
-        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'other_donateurs' => $this->_getCount(['SP Donateur'], ['New', 'Current'], NULL, $yrEnd, 'join'),
-        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], ['New', 'Current'], NULL, $yrEnd, 'join'),
+        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $yr, 'join'),
+        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'join'),
+        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'end_not_deceased'),
+        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'deceased'),
+        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $yrEnd, 'join'),
+        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $yr, 'join'),
+        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $yr, $yrEnd, 'join'),
+        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $yr, $yrEnd, 'end'),
+        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $yrEnd, 'join'),
+        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], NULL, $yrEnd, 'join'),
+        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], NULL, $yrEnd, 'join'),
+        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], NULL, $yrEnd, 'join'),
+        'other_donateurs' => $this->_getCount(['SP Donateur'], NULL, $yrEnd, 'join'),
+        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], NULL, $yrEnd, 'join'),
       ];
     }
 
@@ -174,44 +178,43 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
   }
 
   // Feitelijke counts uitvoeren
-  private function _getCount($membershipTypes, $membershipStatuses, $from = NULL, $to = NULL, $dateChkType = 'join') {
+  private function _getCount($membershipTypes, $from = NULL, $to, $type = 'join') {
 
     foreach ($membershipTypes as &$t) {
       $t = array_search($t, $this->_membershipTypes);
     }
     $membershipTypeString = implode(',', $membershipTypes);
 
-    foreach ($membershipStatuses as &$s) {
+    $statuses = ['New', 'Current', 'Grace', 'Expired', 'Cancelled']; // ie excluding Pending
+    if($type == 'deceased') {
+      $statuses = ['Deceased'];
+    } elseif($type != 'end_not_deceased') {
+      $statuses[] = 'Deceased';
+    }
+    foreach ($statuses as &$s) {
       $s = array_search($s, $this->_membershipStatuses);
     }
-    $membershipStatusString = implode(',', $membershipStatuses);
+    $membershipStatusString = implode(',', $statuses);
 
     $query = "SELECT COUNT(*) FROM civicrm_membership
           WHERE membership_type_id IN ({$membershipTypeString})
           AND status_id IN ({$membershipStatusString})
         ";
 
-    switch ($dateChkType) {
-
-      case 'join':
-        if ($from) {
-          $query .= "AND join_date >= '" . $from->format('Y-m-d') . "'";
-        }
-        if ($to) {
-          $query .= "AND join_date <= '" . $to->format('Y-m-d') . "'";
-        }
-        break;
-      case 'end':
-        if ($from) {
-          $query .= "AND end_date >= '" . $from->format('Y-m-d') . "'";
-        }
-        if ($to) {
-          $query .= "AND end_date <= '" . $to->format('Y-m-d') . "'";
-        }
-        break;
-      case 'both':
-        // Not necessary?
-        break;
+    if ($type == 'join') {
+      if ($from) {
+        $query .= "AND join_date >= '" . $from->format('Y-m-d') . "' ";
+      }
+      $query .= "AND join_date < '" . $to->format('Y-m-d') . "'
+                   AND (end_date IS NULL OR end_date >= '" . $to->format('Y-m-d') . "')
+                   ";
+    }
+    else {
+      if ($from) {
+        $query .= "AND end_date >= '" . $from->format('Y-m-d') . "' ";
+      }
+      $query .= "AND end_date < '" . $to->format('Y-m-d') . "'
+      ";
     }
 
     return CRM_Core_DAO::singleValueQuery($query);
