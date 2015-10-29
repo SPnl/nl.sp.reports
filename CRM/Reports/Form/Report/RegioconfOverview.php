@@ -58,21 +58,25 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
             'title'    => 'Leden',
             'required' => TRUE,
             'default'  => TRUE,
+            'type'     => 1,
           ],
           'count_participants' => [
             'title'    => 'Aangemeld',
             'required' => TRUE,
             'default'  => TRUE,
+            'type'     => 1,
           ],
           'count_voting'       => [
             'title'    => 'Deelnemers',
             'required' => TRUE,
             'default'  => TRUE,
+            'type'     => 1,
           ],
           'count_guests'       => [
             'title'    => 'Gasten',
             'required' => TRUE,
             'default'  => TRUE,
+            'type'     => 1,
           ],
         ],
       ],
@@ -115,18 +119,19 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
 
     // Benodigde variabelen voor ON-clauses in joins
 
-    $whereClause  = count($this->_whereClauses) > 0 ? array_shift($this->_whereClauses) : "";
-    if($whereClause) {
+    $whereClause = count($this->_whereClauses) > 0 ? array_shift($this->_whereClauses) : "";
+    if ($whereClause) {
       $whereClauses = [
         " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp0', $whereClause),
         " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp1', $whereClause),
         " AND " . str_replace($this->_aliases['civicrm_participant'], 'cp2', $whereClause),
       ];
-    } else {
+    }
+    else {
       $whereClauses = ['', '', ''];
     }
 
-    $membershipTypes = [
+    $membershipTypes    = [
       civicrm_api3('MembershipType', 'getvalue', ['return' => 'id', 'name' => 'Lid SP']),
       civicrm_api3('MembershipType', 'getvalue', ['return' => 'id', 'name' => 'Lid SP en ROOD']),
       civicrm_api3('MembershipType', 'getvalue', ['return' => 'id', 'name' => 'Lid ROOD']),
@@ -136,12 +141,12 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
       civicrm_api3('MembershipStatus', 'getvalue', ['return' => 'id', 'name' => 'Current']),
     ];
 
-    $allParticipantRoles = CRM_Event_PseudoConstant::participantRole();
+    $allParticipantRoles      = CRM_Event_PseudoConstant::participantRole();
     $participantRoleDeelnemer = array_search('Deelnemer', $allParticipantRoles);
-    $participantRoleGast = array_search('Gast', $allParticipantRoles);
+    $participantRoleGast      = array_search('Gast', $allParticipantRoles);
 
     $allParticipantStatuses = CRM_Event_PseudoConstant::participantStatus();
-    $participantStatuses = [array_search('Registered', $allParticipantStatuses), array_search('Attended', $allParticipantStatuses)];
+    $participantStatuses    = [array_search('Registered', $allParticipantStatuses), array_search('Attended', $allParticipantStatuses)];
 
     // Feitelijke FROM-query:
 
@@ -154,13 +159,13 @@ class CRM_Reports_Form_Report_RegioconfOverview extends CRM_Report_Form_Event {
                     LEFT JOIN civicrm_contact cr
                     ON cgeo.`{$this->_geoConfig['regio']}` = cr.id
                     LEFT OUTER JOIN civicrm_membership cm
-                    ON cm.contact_id = {$this->_aliases['civicrm_contact']}.id AND cm.status_id IN ("  . implode(',',$membershipStatuses) . ") AND cm.membership_type_id IN ("  . implode(',',$membershipTypes) . ")
+                    ON cm.contact_id = {$this->_aliases['civicrm_contact']}.id AND cm.status_id IN (" . implode(',', $membershipStatuses) . ") AND cm.membership_type_id IN (" . implode(',', $membershipTypes) . ")
                     LEFT OUTER JOIN civicrm_participant cp0
-                    ON cp0.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[0]} AND cp0.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp0.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[0]} AND cp0.status_id IN (" . implode(',', $participantStatuses) . ")
                     LEFT OUTER JOIN civicrm_participant cp1
-                    ON cp1.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[1]} AND cp1.role_id = {$participantRoleDeelnemer} AND cp1.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp1.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[1]} AND cp1.role_id = {$participantRoleDeelnemer} AND cp1.status_id IN (" . implode(',', $participantStatuses) . ")
                     LEFT OUTER JOIN civicrm_participant cp2
-                    ON cp2.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[2]} AND cp2.role_id = {$participantRoleGast} AND cp2.status_id IN ("  . implode(',',$participantStatuses) . ")
+                    ON cp2.contact_id = {$this->_aliases['civicrm_contact']}.id {$whereClauses[2]} AND cp2.role_id = {$participantRoleGast} AND cp2.status_id IN (" . implode(',', $participantStatuses) . ")
                     ";
 
   }
