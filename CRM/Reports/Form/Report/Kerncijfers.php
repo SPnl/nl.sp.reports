@@ -34,7 +34,7 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
         break;
       default:
         $weekCount = 13;
-        $yearCount = 2;
+        $yearCount = 1; // 2014 geeft veel verwarring ivm migratie/correcties
         break;
     }
 
@@ -185,7 +185,7 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
     }
     $membershipTypeString = implode(',', $membershipTypes);
 
-    $statuses = ['New', 'Current', 'Grace', 'Expired', 'Cancelled']; // ie excluding Pending
+    $statuses = ['New', 'Current', 'Grace', 'Expired', 'Cancelled', 'Correctie']; // ie excluding Pending
     if($type == 'deceased') {
       $statuses = ['Deceased'];
     } elseif($type != 'end_not_deceased') {
