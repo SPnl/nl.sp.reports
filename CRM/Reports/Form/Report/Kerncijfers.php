@@ -7,152 +7,217 @@ class CRM_Reports_Form_Report_Kerncijfers extends CRM_Report_Form {
 
   private $_membershipTypes;
   private $_membershipStatuses;
+  private $_rowHeaders;
 
   public function __construct() {
-	$this->_columns = array();
-	$this->_groupFilter = false;
-	$this->_tagFilter   = false;
-	parent::__construct();
+
+    $this->_columns     = [];
+    $this->_groupFilter = FALSE;
+    $this->_tagFilter   = FALSE;
+    parent::__construct();
   }
 
   public function preProcess() {
-	$this->assign('reportTitle', ts('Kerncijfers SP'));
-	parent::preProcess();
+    $this->assign('reportTitle', ts('Kerncijfers SP'));
+    parent::preProcess();
   }
 
   public function postProcess() {
 
-	$this->beginPostProcess();
+    // Lange of korte weergave based on context
 
-	$this->_membershipTypes    = CRM_Member_PseudoConstant::membershipType();
-	$this->_membershipStatuses = CRM_Member_PseudoConstant::membershipStatus();
+    $context = $_GET['context'];
+    switch ($context) {
+      case 'dashlet':
+        $weekCount = 2;
+        $yearCount = 1;
+        break;
+      default:
+        $weekCount = 13;
+        $yearCount = 1; // 2014 geeft veel verwarring ivm migratie/correcties
+        break;
+    }
 
-	$lastWeek = new \DateTime('monday last week');
-	$thisWeek = new \DateTime('monday this week');
-	$thisYear = new \DateTime('01/01');
-	$now      = new \DateTime;
+    $this->beginPostProcess();
 
-	$this->_columnHeaders = array(
-	  'name'       => array('title' => 'Naam'),
-	  'count_lastweek' => array('title' => 'Wk&nbsp;' . (int) $lastWeek->format('W')),
-	  'count_thisweek' => array('title' => 'Wk&nbsp;' . (int) $thisWeek->format('W')),
-	  'count_year' => array('title' => $thisWeek->format('Y')),
-	);
+    $this->_membershipTypes    = CRM_Member_PseudoConstant::membershipType();
+    $this->_membershipStatuses = CRM_Member_PseudoConstant::membershipStatus();
 
-	$rows = array(
-	  array(
-		'name'       => 'Ledencijfer SP',
-		'count_year' => $this->_getCount('lid_sp'),
-	  ),
-	  array(
-		'name'       => 'Ledencijfer ROOD',
-		'count_year' => $this->_getCount('lid_rood'),
-	  ),
-	  array(
-		'name'       => 'Ingeschreven SP-leden',
-		'count_lastweek' => $this->_getCount('lid_sp_new', $lastWeek, $thisWeek),
-		'count_thisweek' => $this->_getCount('lid_sp_new', $thisWeek, $now),
-		'count_year' => $this->_getCount('lid_sp_new', $thisYear, $now),
-	  ),
-	  array(
-		'name'       => 'Uitgeschreven SP-leden',
-		'count_lastweek' => $this->_getCount('lid_sp_end', $lastWeek, $thisWeek),
-		'count_thisweek' => $this->_getCount('lid_sp_end', $thisWeek, $now),
-		'count_year' => $this->_getCount('lid_sp_end', $thisYear, $now),
-	  ),
-	  array(
-		'name'       => 'Overleden SP-leden',
-		'count_lastweek' => $this->_getCount('lid_sp_deceased', $lastWeek, $thisWeek),
-		'count_thisweek' => $this->_getCount('lid_sp_deceased', $thisWeek, $now),
-		'count_year' => $this->_getCount('lid_sp_deceased', $thisYear, $now),
-	  ),
-	  array(
-		'name'       => 'Ingeschreven ROOD-leden',
-		'count_lastweek' => $this->_getCount('lid_rood_new', $lastWeek, $thisWeek),
-		'count_thisweek' => $this->_getCount('lid_rood_new', $thisWeek, $now),
-		'count_year' => $this->_getCount('lid_rood_new', $thisYear, $now),
-	  ),
-	  array(
-		'name'       => 'Uitgeschreven ROOD-leden',
-		'count_lastweek' => $this->_getCount('lid_rood_end', $lastWeek, $thisWeek),
-		'count_thisweek' => $this->_getCount('lid_rood_end', $thisWeek, $now),
-		'count_year' => $this->_getCount('lid_rood_end', $thisYear, $now),
-	  ),
-	);
+    $this->_columnHeaders = [
+      'name' => ['title' => 'Omschrijving', 'type' => 0],
+    ];
+    $this->_rowHeaders    = [
+      'sp_begin'        => ['section' => 'SP', 'name' => 'Beginstand'],
+      'sp_new'          => ['section' => 'SP', 'name' => 'Ingeschreven'],
+      'sp_expired'      => ['section' => 'SP', 'name' => 'Uitgeschreven'],
+      'sp_deceased'     => ['section' => 'SP', 'name' => 'Overleden'],
+      'sp_end'          => ['section' => 'SP', 'name' => 'Eindstand'],
+      'rood_begin'      => ['section' => 'ROOD', 'name' => 'Beginstand'],
+      'rood_new'        => ['section' => 'ROOD', 'name' => 'Ingeschreven'],
+      'rood_expired'    => ['section' => 'ROOD', 'name' => 'Uitgeschreven'],
+      'rood_end'        => ['section' => 'ROOD', 'name' => 'Eindstand'],
+      'other_tribune'   => ['section' => 'Overig', 'name' => 'Abonnees Tribune'],
+      'other_tribproef' => ['section' => 'Overig', 'name' => 'Proefabonnees Tribune'],
+      'other_spanning'  => ['section' => 'Overig', 'name' => 'Abonnees Spanning'],
+      'other_donateurs' => ['section' => 'Overig', 'name' => 'Donateurs'],
+      'other_total'     => ['section' => 'Overig', 'name' => 'Totaal'],
+    ];
 
-	$this->formatDisplay($rows);
-	$this->doTemplateAssignment($rows);
-	$this->endPostProcess($rows);
+    $rows = [];
+    $data = [];
+
+    // Cijfers per week
+
+    for ($week = $weekCount - 1; $week >= 0; $week--) {
+
+      $wk = new \DateTime('monday this week');
+      if ($week > 0) {
+        $wk->sub(new \DateInterval('P' . $week . 'W'));
+      }
+      $wf                               = (int) $wk->format('W');
+      $this->_columnHeaders['wk' . $wf] = ['title' => 'Wk&nbsp;' . $wf, 'type' => 1];
+
+      $wkEnd = clone $wk;
+      $wkEnd->add(new \DateInterval('P1W'));
+
+      $data['wk' . $wf] = [
+        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $wk, 'join'),
+        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'join'),
+        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'end_not_deceased'),
+        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $wk, $wkEnd, 'deceased'),
+        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $wkEnd, 'join'),
+        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $wk, 'join'),
+        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $wk, $wkEnd, 'join'),
+        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $wk, $wkEnd, 'end'),
+        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $wkEnd, 'join'),
+        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], NULL, $wkEnd, 'join'),
+        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], NULL, $wkEnd, 'join'),
+        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], NULL, $wkEnd, 'join'),
+        'other_donateurs' => $this->_getCount(['SP Donateur'], NULL, $wkEnd, 'join'),
+        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], NULL, $wkEnd, 'join'),
+      ];
+    }
+
+    // Cijfers per jaar
+
+    for ($year = 0; $year < $yearCount; $year++) {
+      $yr    = new \DateTime('01/01');
+      $yrEnd = clone $yr;
+      if ($year > 0) {
+        $interval = new \DateInterval('P' . $year . 'Y');
+        $yr->sub($interval);
+        $yrEnd->sub($interval)->add(new \DateInterval('P1Y'));
+
+        $yf    = (int) $yr->format('Y');
+        $key   = (int) $yr->format('Y');
+        $title = '(' . $yf . ')';
+      }
+      else {
+        $yf = (int) $yr->format('Y');
+        $yrEnd->add(new \DateInterval('P364D')); // 364 dagen ivm einddata 31-12
+
+        $key   = 'ycur';
+        $title = $yf;
+      }
+      $this->_columnHeaders[$key] = ['title' => $title, 'type' => 1];
+
+
+      $data[$key] = [
+        'sp_begin'        => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $yr, 'join'),
+        'sp_new'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'join'),
+        'sp_expired'      => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'end_not_deceased'),
+        'sp_deceased'     => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], $yr, $yrEnd, 'deceased'),
+        'sp_end'          => $this->_getCount(['Lid SP', 'Lid SP en ROOD'], NULL, $yrEnd, 'join'),
+        'rood_begin'      => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $yr, 'join'),
+        'rood_new'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $yr, $yrEnd, 'join'),
+        'rood_expired'    => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], $yr, $yrEnd, 'end'),
+        'rood_end'        => $this->_getCount(['Lid SP en ROOD', 'Lid ROOD'], NULL, $yrEnd, 'join'),
+        'other_tribune'   => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Audio-Tribune Betaald'], NULL, $yrEnd, 'join'),
+        'other_tribproef' => $this->_getCount(['Abonnee Blad-Tribune Proef'], NULL, $yrEnd, 'join'),
+        'other_spanning'  => $this->_getCount(['Abonnee SPanning Betaald'], NULL, $yrEnd, 'join'),
+        'other_donateurs' => $this->_getCount(['SP Donateur'], NULL, $yrEnd, 'join'),
+        'other_total'     => $this->_getCount(['Abonnee Blad-Tribune Betaald', 'Abonnee Blad-Tribune Proef', 'Abonnee Audio-Tribune Betaald', 'Abonnee SPanning Betaald', 'SP Donateur'], NULL, $yrEnd, 'join'),
+      ];
+    }
+
+    // Data uitschrijven in rijen...:
+
+    foreach ($this->_rowHeaders as $rkey => $row) {
+
+      foreach ($this->_columnHeaders as $ckey => $cheader) {
+        if ($ckey == 'name') {
+          continue;
+        }
+
+        $row[$ckey] = $data[$ckey][$rkey];
+      }
+      $rows[] = $row;
+    }
+
+    // Section headers and totals
+
+    $this->assign('sections', [
+      'section' => [
+        'title' => 'Kerncijfers',
+        'name'  => 'section',
+        'type'  => 1,
+      ],
+    ]);
+
+    $this->assign('sectionTotals', [
+      'SP'     => $data['ycur']['sp_end'],
+      'ROOD'   => $data['ycur']['rood_end'],
+      'Overig' => $data['ycur']['other_total'],
+    ]);
+
+    // Finalize
+
+    $this->formatDisplay($rows);
+    $this->doTemplateAssignment($rows);
+    $this->endPostProcess($rows);
   }
 
-  private function _getCount($type, $from = null, $to = null) {
+  // Feitelijke counts uitvoeren
+  private function _getCount($membershipTypes, $from = NULL, $to, $type = 'join') {
 
-	switch ($type) {
+    foreach ($membershipTypes as &$t) {
+      $t = array_search($t, $this->_membershipTypes);
+    }
+    $membershipTypeString = implode(',', $membershipTypes);
 
-	  case 'lid_sp':
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid SP') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('New') . ',' . $this->_membershipStatus('Current') . ')';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
+    $statuses = ['New', 'Current', 'Grace', 'Expired', 'Cancelled']; // ie excluding Pending
+    if($type == 'deceased') {
+      $statuses = ['Deceased'];
+    } elseif($type != 'end_not_deceased') {
+      $statuses[] = 'Deceased';
+    }
+    foreach ($statuses as &$s) {
+      $s = array_search($s, $this->_membershipStatuses);
+    }
+    $membershipStatusString = implode(',', $statuses);
 
-	  case 'lid_rood':
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid ROOD') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('New') . ',' . $this->_membershipStatus('Current') . ')';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
+    $query = "SELECT COUNT(*) FROM civicrm_membership
+          WHERE membership_type_id IN ({$membershipTypeString})
+          AND status_id IN ({$membershipStatusString})
+        ";
 
-	  case 'lid_sp_new':
-		if (!$from || !$to)
-		  return false;
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid SP') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('New') . ',' . $this->_membershipStatus('Current') . ') AND join_date >= "' . $from->format('Y-m-d') . '" AND join_date <= "' . $to->format('Y-m-d') . '"';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
+    if ($type == 'join') {
+      if ($from) {
+        $query .= "AND join_date >= '" . $from->format('Y-m-d') . "' ";
+      }
+      $query .= "AND join_date < '" . $to->format('Y-m-d') . "'
+                   AND (end_date IS NULL OR end_date >= '" . $to->format('Y-m-d') . "')
+                   ";
+    }
+    else {
+      if ($from) {
+        $query .= "AND end_date >= '" . $from->format('Y-m-d') . "' ";
+      }
+      $query .= "AND end_date < '" . $to->format('Y-m-d') . "'
+      ";
+    }
 
-	  case 'lid_rood_new':
-		if (!$from || !$to)
-		  return false;
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid ROOD') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('New') . ',' . $this->_membershipStatus('Current') . ')  AND join_date >= "' . $from->format('Y-m-d') . '" AND join_date <= "' . $to->format('Y-m-d') . '"';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
-
-	  case 'lid_sp_end':
-		if (!$from || !$to)
-		  return false;
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid SP') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('Cancelled') . ',' . $this->_membershipStatus('Expired') . ')  AND end_date >= "' . $from->format('Y-m-d') . '" AND end_date <= "' . $to->format('Y-m-d') . '"';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
-
-	  case 'lid_rood_end':
-		if (!$from || !$to)
-		  return false;
-		$query = 'SELECT COUNT(*) FROM civicrm_membership WHERE membership_type_id IN (' . $this->_membershipType('Lid ROOD') . ',' . $this->_membershipType('Lid SP en ROOD') . ') AND status_id IN (' . $this->_membershipStatus('Cancelled') . ',' . $this->_membershipStatus('Expired') . ') AND end_date >= "' . $from->format('Y-m-d') . '" AND end_date <= "' . $to->format('Y-m-d') . '"';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
-
-	  case 'lid_sp_deceased':
-		if (!$from || !$to)
-		  return false;
-		$query = 'SELECT COUNT(*) FROM civicrm_membership cm
-						LEFT JOIN civicrm_contact cc ON cm.contact_id = cc.id
-						WHERE cm.membership_type_id IN (' . $this->_membershipType('Lid SP') . ',' . $this->_membershipType('Lid SP en ROOD') . ')
-						AND cc.is_deceased = 1
-						AND cm.end_date >= "' . $from->format('Y-m-d') . '" AND cm.end_date <= "' . $to->format('Y-m-d') . '"';
-//				echo $query;
-		return CRM_Core_DAO::singleValueQuery($query);
-		break;
-	}
-  }
-
-  private function _membershipType($string) {
-	return array_search($string, $this->_membershipTypes);
-  }
-
-  private function _membershipStatus($string) {
-	return array_search($string, $this->_membershipStatuses);
+    return CRM_Core_DAO::singleValueQuery($query);
   }
 
 }
