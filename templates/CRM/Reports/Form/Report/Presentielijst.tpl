@@ -24,6 +24,17 @@
  +--------------------------------------------------------------------+
 *}
 
+<style type="text/css">
+  /**
+   * Issue with page breaks and large tables
+   * Solution from: http://stackoverflow.com/questions/13516534/how-to-avoid-page-break-inside-table-row-for-wkhtmltopdf#13525758
+   *
+   */
+  table, tr, td, th, tbody, thead, tfoot {
+    page-break-inside: avoid !important;
+  }
+</style>
+
 {literal}
 <script type="text/javascript">
   cj(document).ready(function(){
