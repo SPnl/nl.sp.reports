@@ -23,7 +23,7 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
-
+{literal}
 <style type="text/css">
   /**
    * Issue with page breaks and large tables
@@ -35,7 +35,7 @@
   }
 </style>
 
-{literal}
+
 <script type="text/javascript">
   cj(document).ready(function(){
     cj('#birth_date_from').attr('startOffset',200);
