@@ -107,10 +107,12 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
             INNER JOIN `".$cg_ledentelling['table_name']."` ON `".$cg_ledentelling['table_name']."`.entity_id = civicrm_activity.id
             INNER JOIN civicrm_activity_contact ON civicrm_activity.id = civicrm_activity_contact.activity_id
             where civicrm_activity.activity_type_id = %1
+            and civicrm_activity.is_deleted = 0
+            and civicrm_activity.is_current_revision = 1
             and civicrm_activity_contact.record_type_id = 3
             AND civicrm_activity_contact.contact_id = %2
-            AND MONTH(civicrm_activity.activity_date_time) >= MONTH(%3)
-            AND YEAR(civicrm_activity.activity_date_time) <= YEAR(%3)";
+            AND MONTH(civicrm_activity.activity_date_time) = MONTH(%3)
+            AND YEAR(civicrm_activity.activity_date_time) = YEAR(%3)";
     $params[1] = array($leden_telling_activity, 'Integer');
     $params[2] = array($afdeling_id, 'Integer');
     $params[3] = array($date->format('Y-m-d'), 'String');
