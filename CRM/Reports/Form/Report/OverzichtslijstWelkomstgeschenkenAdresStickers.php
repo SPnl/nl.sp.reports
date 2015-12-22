@@ -254,6 +254,17 @@ class CRM_Reports_Form_Report_OverzichtslijstWelkomstgeschenkenAdresStickers ext
     $this->endPostProcess($rows);
   }
 
+    function orderBy() {
+        $this->_orderBy  = "";
+        $this->_sections = array();
+        $this->storeOrderByArray();
+        if(!empty($this->_orderByArray) && !$this->_rollup == 'WITH ROLLUP'){
+            $this->_orderBy = "ORDER BY `{$this->_aliases['afdeling']}`.display_name, {$this->_aliases['contact_b']}.display_name " . implode(', ', $this->_orderByArray);
+        }
+        $this->assign('sections', $this->_sections);
+    }
+
+
     function groupBy() {
         $this->_groupBy = "GROUP BY `{$this->_aliases['afdeling']}`.id, {$this->_aliases['contact_b']}.id";
     }
