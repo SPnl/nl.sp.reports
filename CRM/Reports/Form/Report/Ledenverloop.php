@@ -21,6 +21,12 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
 
   protected $_exposeContactID = FALSE;
 
+  protected $start_period;
+
+  protected $end_period;
+
+  protected $months;
+
   function __construct() {
     $this->_columns = array(
       'civicrm_contact' => array(
@@ -39,9 +45,15 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
           ),
         ),
         'filters' => array(
-          'display_name' =>
-            array('title' => ts('Contact Name'),
+          'display_name' =>  array(
+              'title' => ts('Afdelingsnaam'),
             ),
+            'period' => array(
+              'title' => ts('Perioe'),
+              'type' => CRM_Utils_Type::T_DATE,
+              'operatorType' => CRM_Report_Form::OP_DATE,
+              'pseudofield' => true,
+            )
         ),
         'grouping' => 'contact-fields',
       ),
@@ -54,6 +66,31 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
   }
 
   function storeWhereHavingClauseArray() {
+    $this->start_period = new DateTime();
+    $this->start_period->modify('-1 year');
+    $this->end_period = new DateTime();
+
+    //check if join date is parsed as filter, if so set the relationship dates to this value
+    $fieldName = 'period';
+    $relative = CRM_Utils_Array::value("{$fieldName}_relative", $this->_params);
+    $from     = CRM_Utils_Array::value("{$fieldName}_from", $this->_params);
+    $to       = CRM_Utils_Array::value("{$fieldName}_to", $this->_params);
+    $fromTime = CRM_Utils_Array::value("{$fieldName}_from_time", $this->_params);
+    $toTime   = CRM_Utils_Array::value("{$fieldName}_to_time", $this->_params);
+    list($fromDate, $toDate) = $this->getFromTo($relative, $from, $to, $fromTime, $toTime);
+    if ($fromDate && $toDate) {
+      $this->start_period = new DateTime($fromDate);
+      $this->end_period = new DateTime($toDate);
+    } elseif ($fromDate) {
+      $this->start_period = new DateTime($fromDate);
+      $this->end_period = new DateTime($fromDate);
+      $this->end_period->modify('+1 year');
+    } elseif ($toDate) {
+      $this->start_period = new DateTime($toDate);
+      $this->start_period->modify('-1 year');
+      $this->end_period = new DateTime($toDate);
+    }
+
     parent::storeWhereHavingClauseArray();
 
     $this->_whereClauses[] = "{$this->_aliases['civicrm_contact']}.contact_sub_type like '%SP_Afdeling%'";
@@ -78,14 +115,15 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
   function alterDisplay(&$rows) {
     foreach($rows as $rowIndex => $row) {
       $contact_id = $row['civicrm_contact_id'];
-      for($i=1; $i <= 12; $i++) {
+
+      foreach($this->months as $tstamp => $label) {
         $date = new DateTime();
-        $date->setDate($date->format('Y'), $i, 1);
+        $date->setTimestamp($tstamp);
         $ledenAantal = $this->getAantalLeden($contact_id, $date);
         if (empty($ledenAantal)) {
           $ledenAantal = '0';
         }
-        $rows[$rowIndex][$i] = $ledenAantal;
+        $rows[$rowIndex][$tstamp] = $ledenAantal;
       }
     }
   }
@@ -121,19 +159,33 @@ class CRM_Reports_Form_Report_Ledenverloop extends CRM_Report_Form {
   }
 
   function modifyColumnHeaders() {
+    $months = array(
+      1 => 'Jan',
+      2 => 'Feb',
+      3 => 'Mrt',
+      4 => 'Apr',
+      5 => 'Mei',
+      6 => 'Jun',
+      7 => 'Jul',
+      8 => 'Aug',
+      9 => 'Sep',
+      10 => 'Okt',
+      11 => 'Nov',
+      12 => 'Dec',
+    );
+
+
     // use this method to modify $this->_columnHeaders
-    $this->_columnHeaders['1'] = array('title' => 'Jan');
-    $this->_columnHeaders['2'] = array('title' => 'Feb');
-    $this->_columnHeaders['3'] = array('title' => 'Maart');
-    $this->_columnHeaders['4'] = array('title' => 'April');
-    $this->_columnHeaders['5'] = array('title' => 'Mei');
-    $this->_columnHeaders['6'] = array('title' => 'Jun');
-    $this->_columnHeaders['7'] = array('title' => 'Jul');
-    $this->_columnHeaders['8'] = array('title' => 'Aug');
-    $this->_columnHeaders['9'] = array('title' => 'Sept');
-    $this->_columnHeaders['10'] = array('title' => 'Okt');
-    $this->_columnHeaders['11'] = array('title' => 'Nov');
-    $this->_columnHeaders['12'] = array('title' => 'Dec');
+    $date = clone $this->start_period;
+    $date->modify('first day of this month');
+    $end_date = clone $this->end_period;
+    $end_date->modify('last day of this month');
+    while ($date <= $end_date) {
+      $date->modify('first day of this month');
+      $this->months[$date->getTimestamp()] = $months[$date->format('n')] .' '.$date->format('y');
+      $this->_columnHeaders[$date->getTimestamp()] = array('title' => $months[$date->format('n')] .' '.$date->format('y'));
+      $date->modify('+1 month');
+    }
   }
 
 }
