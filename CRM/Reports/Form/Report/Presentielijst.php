@@ -46,6 +46,25 @@ class CRM_Reports_Form_Report_Presentielijst extends CRM_Report_Form_Event {
 
   public $_drilldownReport = array('event/income' => 'Link to Detail Report');
 
+  /**
+   * Get a standardized array of <select> options for "Event Title"
+   * filter values.
+   * @return Array
+   */
+  function getEventFilterOptions() {
+    $events = array();
+    $query = "
+        select id, start_date, title from civicrm_event
+        where (is_template IS NULL OR is_template = 0) AND is_active
+        order by title ASC, start_date
+    ";
+    $dao = CRM_Core_DAO::executeQuery($query);
+    while($dao->fetch()) {
+      $events[$dao->id] = "{$dao->title} - " . CRM_Utils_Date::customFormat(substr($dao->start_date, 0, 10)) . " (ID {$dao->id})";
+    }
+    return $events;
+  }
+
   function __construct() {
     $this->_autoIncludeIndexedFieldsAsOrderBys = 1;
 
