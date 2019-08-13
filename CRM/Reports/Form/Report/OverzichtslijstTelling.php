@@ -9,12 +9,12 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
   protected $_summary = NULL;
 
   protected $_customGroupExtends = array('Membership');
-  protected $_customGroupGroupBy = FALSE; 
-  
+  protected $_customGroupGroupBy = FALSE;
+
   protected $_add2groupSupported = FALSE;
-  
+
   protected $_exposeContactID = FALSE;
-  
+
   function __construct() {
     $config = CRM_Geostelsel_Config::singleton();
 
@@ -31,7 +31,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
             'title' => ts('Provincie'),
             'default' => TRUE,
             'name' => 'display_name'
-          ),          
+          ),
         ),
         'filters' => array(
         ),
@@ -63,7 +63,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
             'title' => ts('Regio'),
             'default' => TRUE,
             'name' => 'display_name'
-          ),          
+          ),
         ),
         'filters' => array(
         ),
@@ -95,7 +95,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
             'title' => ts('Afdeling'),
             'default' => TRUE,
             'name' => 'display_name'
-          ),          
+          ),
         ),
         'filters' => array(
         ),
@@ -172,15 +172,15 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
           'name' => array (
             'title' => ts('Status'),
             'section' => true,
-          ),          
-        ), 
+          ),
+        ),
         'group_bys' => array (
           'sid' => array (
             'title' => ts('Status'),
             'default' => true,
             'name' => 'id',
-          ),          
-        ),        
+          ),
+        ),
         'grouping' => 'member-fields',
       ),
       'civicrm_address' => array(
@@ -235,7 +235,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
               ),
             'required' => TRUE,
             'default' => TRUE,
-          ), 
+          ),
         ),
         'filters' => array(
         ),
@@ -265,7 +265,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     $afdeling = $config->getAfdelingsField('column_name');
     $regio = $config->getRegioField('column_name');
     $provincie = $config->getProvincieField('column_name');
-    
+
     $this->_from = NULL;
 
     $this->_from = "
@@ -275,17 +275,17 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
                              {$this->_aliases['civicrm_membership']}.contact_id AND {$this->_aliases['civicrm_membership']}.is_test = 0
                LEFT  JOIN civicrm_membership_status {$this->_aliases['civicrm_membership_status']}
                           ON {$this->_aliases['civicrm_membership_status']}.id =
-                             {$this->_aliases['civicrm_membership']}.status_id  
+                             {$this->_aliases['civicrm_membership']}.status_id
                LEFT JOIN {$table} `geostelsel`
                           ON {$this->_aliases['civicrm_contact']}.id = geostelsel.entity_id
-               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_afdeling']} 
+               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_afdeling']}
                           ON {$this->_aliases['civicrm_afdeling']}.id = `geostelsel`.`{$afdeling}`
-               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_regio']} 
+               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_regio']}
                           ON {$this->_aliases['civicrm_regio']}.id = `geostelsel`.`{$regio}`
-               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_provincie']} 
+               LEFT JOIN civicrm_contact {$this->_aliases['civicrm_provincie']}
                           ON {$this->_aliases['civicrm_provincie']}.id = `geostelsel`.`{$provincie}`
                ";
-                             
+
 
     $this->_from .= "
            LEFT JOIN civicrm_address {$this->_aliases['civicrm_address']}
@@ -306,10 +306,10 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
 
   function storeWhereHavingClauseArray(){
     parent::storeWhereHavingClauseArray();
-    
+
     $start_date = 'NOW()';
     $end_date = 'NOW()';
-    
+
     //check if join date is parsed as filter, if so set the relationship dates to this value
     $fieldName = 'join_date';
     $relative = CRM_Utils_Array::value("{$fieldName}_relative", $this->_params);
@@ -324,10 +324,10 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     if ($toDate) {
       $start_date = $toDate;
     }
-    
+
     $this->_whereClauses[] = $this->addActiveRelationshipWhere($this->_aliases['civicrm_membership'], $start_date, $end_date);
   }
-  
+
   protected function addActiveRelationshipWhere($relationship_table, $start_date, $end_date) {
     $where = '((`%1$s`.`start_date` IS NULL OR `%1$s`.`start_date` <= %2$s) AND (`%1$s`.`end_date` IS NULL OR `%1$s`.`end_date` >= %3$s) )';
     return sprintf($where, $relationship_table, $start_date, $end_date);
@@ -340,9 +340,9 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     // get the acl clauses built before we assemble the query
     $this->buildACLClause($this->_aliases['civicrm_contact']);
     $sql = $this->buildQuery(TRUE);
-    
+
 //echo $sql; exit();
-    
+
     $rows = array();
     $this->buildRows($sql, $rows);
 
@@ -408,7 +408,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         $rows[$rowNum]['civicrm_afdeling_afdeling_display_name_hover'] = ts("View Contact Summary for this Contact.");
         $entryFound = TRUE;
       }
-      
+
       if (array_key_exists('civicrm_regio_regio_display_name', $row) &&
         $rows[$rowNum]['civicrm_regio_regio_display_name'] &&
         array_key_exists('civicrm_regio_regio_id', $row)
@@ -421,7 +421,7 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
         $rows[$rowNum]['civicrm_regio_regio_display_name_hover'] = ts("View Contact Summary for this Contact.");
         $entryFound = TRUE;
       }
-      
+
       if (array_key_exists('civicrm_provincie_provincie_display_name', $row) &&
         $rows[$rowNum]['civicrm_provincie_provincie_display_name'] &&
         array_key_exists('civicrm_provincie_provincie_id', $row)
