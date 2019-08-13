@@ -326,6 +326,9 @@ class CRM_Reports_Form_Report_OverzichtslijstTelling extends CRM_Report_Form {
     }
 
     $this->_whereClauses[] = $this->addActiveRelationshipWhere($this->_aliases['civicrm_membership'], $start_date, $end_date);
+    $this->_whereClauses[] = "{$this->_aliases['civicrm_provincie']}.is_deleted = 0";
+    $this->_whereClauses[] = "{$this->_aliases['civicrm_afdeling']}.is_deleted = 0";
+    $this->_whereClauses[] = "{$this->_aliases['civicrm_regio']}.is_deleted = 0";
   }
 
   protected function addActiveRelationshipWhere($relationship_table, $start_date, $end_date) {
